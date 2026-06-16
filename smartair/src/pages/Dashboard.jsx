@@ -4,6 +4,7 @@ import { auth } from '../firebase/config';
 import { getUserStations, listenToReadings } from '../firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { calcAqi } from './Utils';
 
 
 export default function Dashboard() {
@@ -27,20 +28,21 @@ export default function Dashboard() {
   // Ascolta le letture della stazione selezionata
   useEffect(() => {
     if (!selectedStation) return;
-    const unsub = listenToReadings(selectedStation, setReadings);
+    const unsub = listenToReadings(selectedStation, data => {
+      console.log('Readings ricevuti:', data);
+      setReadings(data);
+    });
     return unsub;
   }, [selectedStation]);
 
   const latest = readings.at(-1);
 
+  const aqi = calcAqi(latest?.air_ppm);
+  
   return (
+    // Contenitore principale
     <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>SmartAir</h1>
-        <button onClick={() => signOut(auth)}>Esci</button>
-        <button onClick={() => navigate('/devices')}>Dispositivi</button>
-      </div>
-
+      
       {/* Selettore stazione */}
       {stations.length === 0 ? (
         <p style={{ color: '#888' }}>Nessuna stazione trovata. Aggiungine una dalla pagina Dispositivi.</p>
@@ -65,26 +67,27 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Stat cards */}
+      {/* Stat cards */}      
       {latest && (
         <div style={{ display: 'flex', gap: 16, margin: '24px 0' }}>
           <StatCard label="Temperatura" value={`${latest.temp}°C`} />
           <StatCard label="Umidità" value={`${latest.humidity}%`} />
           <StatCard label="CO₂ eq." value={`${latest.air_ppm} ppm`} />
-          <StatCard label="AQI" value={latest.aqi} color={aqiColor(latest.aqi)} />
+          <StatCard label="AQI" value={aqi.label} background={aqi.color} />
         </div>
       )}
 
       {/* Grafico */}
       {readings.length > 0 && (
         <>
-          <h2>Temperatura</h2>
+          <h2>Temperatura & Umidità</h2>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={readings}>
               <XAxis dataKey="timestamp" hide />
               <YAxis domain={['auto', 'auto']} />
               <Tooltip />
-              <Line type="monotone" dataKey="temp" stroke="#2196f3" dot={false} />
+              <Line type="monotone" dataKey="temp" stroke="#f321ad" dot={false} />
+              <Line type="monotone" dataKey="humidity" stroke="#43d3ff" dot={false} />
             </LineChart>
           </ResponsiveContainer>
 
@@ -103,17 +106,12 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ label, value, color }) {
+function StatCard({ label, value, text_color, background}) {
   return (
     <div style={{ flex: 1, padding: 16, border: '1px solid #eee',
-                  borderRadius: 8, textAlign: 'center' }}>
+                  borderRadius: 8, textAlign: 'center', background: background || 'inherit' }}>
       <div style={{ fontSize: 12, color: '#666' }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 500, color: color || 'inherit' }}>{value}</div>
+      <div style={{ fontSize: 24, fontWeight: 500, color: text_color || 'inherit' }}>{value}</div>
     </div>
   );
-}
-
-function aqiColor(aqi) {
-  const colors = { good: '#4caf50', moderate: '#ff9800', poor: '#f44336', hazardous: '#9c27b0' };
-  return colors[aqi] || 'inherit';
 }

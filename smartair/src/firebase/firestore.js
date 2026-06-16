@@ -4,6 +4,8 @@ import {
   onSnapshot, query, orderBy, limit, setDoc
 } from 'firebase/firestore';
 
+// In questo file definisco solo le funzione che hanno a che fare con firestone e che ci interagiscono direttamente.
+
 // Recupera le stazioni a cui ha accesso l'utente
 export function getUserStations(uid, callback) {
   const ref = collection(db, 'users', uid, 'stations');
@@ -50,7 +52,6 @@ export async function createStation(uid, name) {
 
 // Ascolta le ultime N letture di una stazione in realtime
 export function listenToReadings(stationId, callback, n = 20) {
-  console.log('listenToReadings per stationId:', stationId);
   const ref = query(
     collection(db, 'stations', stationId, 'readings'),
     orderBy('timestamp', 'desc'),
@@ -58,8 +59,21 @@ export function listenToReadings(stationId, callback, n = 20) {
   );
   return onSnapshot(ref, snap => {
     const readings = snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
+      .map(d => {
+        const data = d.data();
+        // converte il timestamp in una stringa per i grafici (eventualmente da fare in una funziona a parte se servirà averlo in altri formati)
+        return {
+          id: d.id,
+          ...data,
+          timestamp: data.timestamp?.toDate().toLocaleTimeString('it-IT', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        };
+      })
       .reverse();
     callback(readings);
+  }, error => {
+    console.error('Errore snapshot:', error.code, error.message);
   });
 }
