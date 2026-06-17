@@ -3,7 +3,7 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD03WiU5-X2MxaHcP8L2Qy7u1Zr5Huu8gc",
+  apiKey: "API-KEY",
   authDomain: "smartair-8fabf.firebaseapp.com",
   projectId: "smartair-8fabf",
   storageBucket: "smartair-8fabf.firebasestorage.app",
