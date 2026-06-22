@@ -4,7 +4,8 @@
 /node_modules
 /.pnp
 .pnp.js
-/smartair/emulator-data
+smartair/emulator-data
+smartair/firebase-export-*
 
 # testing
 /coverage
