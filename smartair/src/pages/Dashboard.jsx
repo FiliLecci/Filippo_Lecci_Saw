@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { useNavigate } from 'react-router-dom';
 import { calcAqi } from './Utils';
 
+import '../styles/style.css';
 
 export default function Dashboard() {
   const [stations, setStations] = useState([]);
@@ -51,14 +52,11 @@ export default function Dashboard() {
           {stations.map(s => (
             <button
               key={s.id}
+              className="stationSelBtn"
               onClick={() => setSelectedStation(s.id)}
               style={{
-                padding: '6px 14px',
-                borderRadius: 8,
-                border: '1px solid #ddd',
                 background: selectedStation === s.id ? '#2196f3' : 'white',
-                color: selectedStation === s.id ? 'white' : 'black',
-                cursor: 'pointer'
+                color: selectedStation === s.id ? 'white' : 'black'
               }}
             >
               {s.nickname || s.name}
@@ -86,8 +84,8 @@ export default function Dashboard() {
               <XAxis dataKey="timestamp" hide />
               <YAxis domain={['auto', 'auto']} />
               <Tooltip />
-              <Line type="monotone" dataKey="temp" stroke="#f321ad" dot={false} />
-              <Line type="monotone" dataKey="humidity" stroke="#43d3ff" dot={false} />
+              <Line type="monotone" dataKey="temp" stroke="#f8ac08" dot={false} />
+              <Line type="monotone" dataKey="humidity" stroke="#3f24a3" dot={false} />
             </LineChart>
           </ResponsiveContainer>
 

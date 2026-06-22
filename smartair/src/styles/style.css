@@ -1,0 +1,35 @@
+.stationSelBtn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd; 
+    cursor: pointer;
+}
+
+.vertBar {
+    height: 90%;
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.addBtn {
+    transition: all 0.2s;
+    padding: 10px 20px;
+    background: #2195f3;
+    color: white;
+    border: 1px solid #307dbd9c;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20;
+}
+
+.addBtn:hover {
+    background: #1d85da;
+}
+
+.stationInput {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1;
+}

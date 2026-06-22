@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { auth } from '../firebase/config';
-import { getUserStations, createStation } from '../firebase/firestore';
-import {LuTrash, LuEye, LuPen} from 'react-icons/lu'
+import { 
+  getUserStations, createStation, 
+  deleteStationForUser, deleteStationPermanent 
+} from '../firebase/firestore';
+import {LuTrash, LuEye, LuPen} from 'react-icons/lu';
+import { ViewDeviceModal } from '../components/ViewDeviceModal';
+import { ConfirmModal } from '../components/ConfirmModal';
+import '../index.css';
+import '../styles/style.css';
 
 export default function Devices() {
   const [stations, setStations] = useState([]);
   const [newName, setNewName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedStation, setSelectedStation] = useState(null); // Tiene traccia della stazione selezionata per il modal
+  const [selectedMode, setSelectedMode] = useState(null); // Tiene traccia della modalità selezionata per il modal
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false); // Stato per il modal di conferma eliminazione
   const uid = auth.currentUser.uid;
 
   useEffect(() => {
@@ -22,40 +32,49 @@ export default function Devices() {
     setLoading(false);
   };
 
+  const handleDelete = async (stationId) => {
+    try {
+      if(uid === stationId.owner) {
+        await deleteStationForUser(uid, stationId);
+      }
+      else{
+        await deleteStationPermanent(uid, stationId);
+      }
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione della stazione:', error);
+    }
+  };
+
   return (
     <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
       <h1>Dispositivi</h1>
 
       {/* Form aggiungi stazione */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 32, height: '40px', alignItems: 'center' }}>
         <input
+          className='stationInput'
           placeholder="Nome stazione (es. Camera da letto)"
           value={newName}
           onChange={e => setNewName(e.target.value)}
           onKeyPress={e => e.key === 'Enter' && handleAdd()}
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: '1px solid #ddd',
-            fontSize: 14
-          }}
         />
         <button
+          className='addBtn'
           onClick={handleAdd}
           disabled={loading}
-          style={{
-            padding: '10px 20px',
-            background: '#2196f3',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
-            fontSize: 14
-          }}
         >
           {loading ? '...' : 'Aggiungi'}
         </button>
+        <hr className="vertBar"/>
+        <input
+          className='stationInput'
+          placeholder='Token stazione esistente'
+        />
+        <button
+          className='addBtn'
+        >
+          {loading ? '...' : 'Aggiungi'}
+        </button>  
       </div>
 
       {/* CSS Grid */}
@@ -111,6 +130,8 @@ export default function Devices() {
                   }}
                   onMouseEnter={e => e.target.style.background = '#eeeeee'}
                   onMouseLeave={e => e.target.style.background = '#f5f5f5'}
+                  onClick={() => {setSelectedStation(station); 
+                                  setSelectedMode('edit');}}
                 >
                   <LuPen /> Modifica
                 </button>
@@ -127,6 +148,8 @@ export default function Devices() {
                   }}
                   onMouseEnter={e => e.target.style.background = '#eeeeee'}
                   onMouseLeave={e => e.target.style.background = '#f5f5f5'}
+                  onClick={() => {setSelectedStation(station); 
+                                  setSelectedMode('view');}}
                 >
                   <LuEye /> Visualizza
                 </button>
@@ -144,6 +167,13 @@ export default function Devices() {
                   }}
                   onMouseEnter={e => e.target.style.background = '#ffcdd2'}
                   onMouseLeave={e => e.target.style.background = '#ffebee'}
+                  onClick={() => {
+                    /* if (window.confirm(`Sei sicuro di voler eliminare la stazione "${station.nickname || station.name}"?`)) {
+                      handleDelete(station.id);
+                      } */
+                    setSelectedStation(station);
+                    setConfirmModalOpen(true);
+                  }}
                 >
                 <LuTrash /> Elimina
                 </button>
@@ -152,6 +182,27 @@ export default function Devices() {
           ))}
         </div>
       )}
+    {/* Modale di conferma eliminazione */}
+    {selectedStation && (
+      <ConfirmModal
+        isOpen={confirmModalOpen}
+        body={`Sei sicuro di voler eliminare la stazione "${selectedStation.name}"?`}
+        confirmText="Conferma"
+        cancelText="Annulla"
+      onConfirm={() => {handleDelete(selectedStation.id);setConfirmModalOpen(false);}}
+      onCancel={() => {setConfirmModalOpen(false);}}
+    />
+    )}
+    {/* Modale di visualizzazione/modifica stazione */}
+    <ViewDeviceModal
+      isViewed={selectedStation !== null} 
+      station={selectedStation} 
+      mode={selectedMode} 
+      onClose={() => {
+        setSelectedStation(null);
+        setSelectedMode(null);
+        }}
+    />
     </div>
   );
 }

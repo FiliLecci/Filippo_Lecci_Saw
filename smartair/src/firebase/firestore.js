@@ -1,8 +1,10 @@
-import { db, auth } from './config';
+import { db, auth, functions } from './config';
 import {
   collection, doc, addDoc, getDoc, getDocs,
-  onSnapshot, query, orderBy, limit, setDoc
+  onSnapshot, query, orderBy, limit, setDoc,
+  deleteDoc,  CollectionReference
 } from 'firebase/firestore';
+import { httpsCallable } from "firebase/functions";
 
 // In questo file definisco solo le funzione che hanno a che fare con firestone e che ci interagiscono direttamente.
 
@@ -23,6 +25,24 @@ export function getUserStations(uid, callback) {
     );
     callback(stations);
   });
+}
+
+export async function getUserInfo(uid) {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  return userSnap.exists() ? userSnap.data() : null;
+}
+
+// Modifica il nickname visualizzato per una stazione per l'utente identificato da uid
+export async function modifyStationNickname(uid, stationId, newNickname) {
+  try {
+    await setDoc(doc(db, 'users', uid, 'stations', stationId), {
+      nickname: newNickname
+    }, { merge: true });
+  } catch (e) {
+    console.error('Errore modifyStationNickname:', e.code, e.message);
+    throw e;
+  }
 }
 
 // Crea una nuova stazione e la associa all'utente
@@ -49,6 +69,47 @@ export async function createStation(uid, name) {
     throw e;
   }
 }
+
+// Elimina una stazione per un utente se questo non è il proprietario
+export async function deleteStationForUser(uid, stationId) {
+  try {
+    const stationRef = doc(db, 'stations', stationId);
+    const stationSnap = await getDoc(stationRef);
+
+    if(!stationSnap.exists()) {
+      throw new Error('Stazione non trovata');
+    }
+    
+    const stationData = stationSnap.data();
+
+    // Eliminazione del documento
+    await deleteDoc(doc(db, 'users', uid, 'stations', stationId));
+    console.log('Stazione rimossa per utente:', uid);
+  } catch (e) {
+    console.error('Errore deleteStationForUser:', e.code, e.message);
+    throw e;
+  }
+}
+
+// Elimina una stazione in modo permanente se l'utente ne è proprietario
+export async function deleteStationPermanent(uid, stationId) {
+  try {
+    const recursiveDeleteCollection = httpsCallable(functions, "recursiveDeleteCollection");
+    const res1 = await recursiveDeleteCollection({ path: `stations/${stationId}` });
+
+    console.log('Stazione eliminata permanentemente: ', res1);
+    
+    const deleteStationRefs = httpsCallable(functions, "deleteAllStationRefs");
+    const res2 = await deleteStationRefs({stationId: stationId});
+
+    console.log('Riferimenti della stazione rimossi per tutti gli utenti: ', res2);
+  }
+  catch (e) {
+    console.error('Errore deleteStationPermanent:', e.code, e.message);
+    throw e;
+  }
+}
+
 
 // Ascolta le ultime N letture di una stazione in realtime
 export function listenToReadings(stationId, callback, n = 20) {
