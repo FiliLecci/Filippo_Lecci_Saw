@@ -32,7 +32,23 @@ import admin from 'firebase-admin';
 
 admin.initializeApp();
 
-export const recursiveDeleteCollection = onCall({cors: true}, async (request) => {
+// Restituisce un riferimento alla stazione a partire dal token
+const getStationFromToken = onCall({}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Operazione non autorizzata.");
+  }
+
+  try{
+    const stationSnap = await admin.firestore().collection('stations').get();
+    stationSnap.forEach(stationDoc => {
+      if (stationDoc.device_token === request.data.stationToken) return stationDoc;
+    });
+  } catch (e) {
+    throw new HttpsError("internal", "Impossibile ottenere stazione dal token", e);
+  }
+});
+
+export const recursiveDeleteCollection = onCall({}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Operazione non autorizzata.");
   }
@@ -73,7 +89,7 @@ export const recursiveDeleteCollection = onCall({cors: true}, async (request) =>
 
 
 // Elimina tutti i riferimenti ad una stazione
-export const deleteAllStationRefs = onCall({cors: true}, async (request) => {
+export const deleteAllStationRefs = onCall({}, async (request) => {
   // Verifica autenticazione
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Operazione non autorizzata.");
@@ -122,5 +138,82 @@ export const deleteAllStationRefs = onCall({cors: true}, async (request) => {
   } catch (error) {
     console.error('Errore deleteStation:', error);
     throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+export const createNewStation = onCall({}, async(request) => {
+  // Verifica l'autenticazione dell'utente
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
+  }
+
+  const { uid, name } = request.data;
+
+  try {
+    console.log("Creazione stazione principale");
+    // Scrittura stazione principale
+    const stationRef = await admin.firestore().collection('stations').add({
+      name,
+      owner: uid,
+      visibility: 'private',
+      device_token: crypto.randomUUID(),
+      createdAt: new Date()
+    });
+    
+    console.log("Creazione prima lettura");
+    // Scrittura sottocollezione readings
+    await admin.firestore().collection(`stations/${stationRef.id}/readings`).add({
+      temp: 0,
+      humidity: 0,
+      air_ppm: 0,
+      timestamp:  new Date()
+    });
+    
+    console.log("Aggiunta riferimento per l'utente");
+    // Scrittura riferimento utente
+    await admin.firestore().doc(`users/${uid}/stations/${stationRef.id}`).set({
+      role: 'owner',
+      nickname: name
+    });
+
+    console.log("Creazione completata");
+    return { stationId: stationRef.id };
+
+  } catch (error) {
+    console.error(error.message);
+    throw new HttpsError("internal", "Errore durante la scrittura su Firestore", error);
+  }
+});
+
+export const addUserStation = onCall({}, async(request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
+  }
+
+  const { uid, stationToken } = request.data;
+
+  
+  try {
+    // Ottengo il riferimento alla stazione dal token
+    const stationRef = await getStationFromToken(stationToken);
+    
+    const stationUserSnap = await admin.firestore().collection('users', uid, 'stations').get();
+    stationUserSnap.forEach(doc => {
+      if(doc.id === stationRef.id){
+        throw new HttpsError("internal", "La stazione è già assegnata all'utente");
+      }
+    });
+
+
+    await admin.firestore().collection(`users/${uid}/stations`).doc(stationId).set({
+      nickname: stationSnap.data.name,
+      role: "Ospite"
+    });
+
+    console.log("Aggiunta stazione " + stationId + " per l'utente " + uid);
+
+  } catch (error) {
+    console.error(error.message);
+    throw new HttpsError("cancelled", "Errore durante l'aggiunta della stazione", error);
   }
 });

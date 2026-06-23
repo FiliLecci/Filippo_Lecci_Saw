@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { auth, db } from '../firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import { modifyStationNickname, getUserInfo } from '../firebase/firestore';
+import { LuClipboardPaste, LuEye } from 'react-icons/lu'
+import { GoPerson } from "react-icons/go";
+
 
 import '../styles/ViewDeviceModal.css';
 
@@ -50,7 +53,6 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
   const RenderViewInfo = ({ station }) => {
     return (
       <>
-        <div className="modal-overlay" onClick={handleClose}/>
         <div className="field-group">
           <label className="field-label-small">Nome Visualizzazione</label>
           <p className="field-value">{station.nickname || station.name}</p>
@@ -74,7 +76,7 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
                 className="copy-btn"
                 onClick={() => navigator.clipboard.writeText(station.device_token)}
               >
-                📋 Copia
+                <LuClipboardPaste /> Copia
             </button>
           </div>
         </div>
@@ -90,7 +92,7 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
         <div className="field-group">
           <label className="field-label-small">Ruolo</label>
           <p className="field-value-secondary">
-            {station.role === 'owner' ? '👤 Proprietario' : '👁️ Osservatore'}
+            {station.role === 'owner' ? <GoPerson /> + 'Proprietario' : <LuEye /> + ' Osservatore'}
           </p>
         </div>
       </>
@@ -111,7 +113,6 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
 
     return (
       <>
-        <div className="modal-overlay" onClick={handleClose}/>
         <div className="field-group">
           <label className="field-label">Nome Visualizzazione</label>
           <input
@@ -148,7 +149,7 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
               className="copy-btn"
               onClick={() => navigator.clipboard.writeText(station.device_token)}
             >
-              📋 Copia
+              <LuClipboardPaste /> Copia
             </button>
           </div>
         </div>

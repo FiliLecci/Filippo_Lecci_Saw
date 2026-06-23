@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { auth } from '../firebase/config';
 import { 
   getUserStations, createStation, 
-  deleteStationForUser, deleteStationPermanent 
+  deleteStationForUser, deleteStationPermanent, 
+  addStationToUser
 } from '../firebase/firestore';
 import {LuTrash, LuEye, LuPen} from 'react-icons/lu';
 import { ViewDeviceModal } from '../components/ViewDeviceModal';
@@ -13,6 +14,7 @@ import '../styles/style.css';
 export default function Devices() {
   const [stations, setStations] = useState([]);
   const [newName, setNewName] = useState('');
+  const [stationToken, setStationToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedStation, setSelectedStation] = useState(null); // Tiene traccia della stazione selezionata per il modal
   const [selectedMode, setSelectedMode] = useState(null); // Tiene traccia della modalità selezionata per il modal
@@ -32,6 +34,16 @@ export default function Devices() {
     setLoading(false);
   };
 
+  const handleExistingStationAdd = async () => {
+    if(!stationToken.trim()) 
+      return;
+
+    setLoading(true);
+    await addStationToUser(uid, stationToken.trim());
+    setStationToken('');
+    setLoading(false);
+  };
+
   const handleDelete = async (stationId) => {
     try {
       if(uid === stationId.owner) {
@@ -46,6 +58,7 @@ export default function Devices() {
   };
 
   return (
+    <>
     <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
       <h1>Dispositivi</h1>
 
@@ -56,7 +69,7 @@ export default function Devices() {
           placeholder="Nome stazione (es. Camera da letto)"
           value={newName}
           onChange={e => setNewName(e.target.value)}
-          onKeyPress={e => e.key === 'Enter' && handleAdd()}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
         />
         <button
           className='addBtn'
@@ -69,9 +82,14 @@ export default function Devices() {
         <input
           className='stationInput'
           placeholder='Token stazione esistente'
+          value={stationToken}
+          onChange={e => setStationToken(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleExistingStationAdd()}
         />
         <button
           className='addBtn'
+          onClick={handleExistingStationAdd}
+          disabled={loading}
         >
           {loading ? '...' : 'Aggiungi'}
         </button>  
@@ -182,6 +200,7 @@ export default function Devices() {
           ))}
         </div>
       )}
+    </div>
     {/* Modale di conferma eliminazione */}
     {selectedStation && (
       <ConfirmModal
@@ -203,6 +222,6 @@ export default function Devices() {
         setSelectedMode(null);
         }}
     />
-    </div>
+    </>
   );
 }
