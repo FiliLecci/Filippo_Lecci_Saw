@@ -3,7 +3,7 @@ import { auth } from '../firebase/config';
 import { 
   getUserStations, createStation, 
   deleteStationForUser, deleteStationPermanent, 
-  addStationToUser
+  addStationToUser, getUserStationRole
 } from '../firebase/firestore';
 import {LuTrash, LuEye, LuPen} from 'react-icons/lu';
 import { ViewDeviceModal } from '../components/ViewDeviceModal';
@@ -14,7 +14,7 @@ import '../styles/style.css';
 export default function Devices() {
   const [stations, setStations] = useState([]);
   const [newName, setNewName] = useState('');
-  const [stationToken, setStationToken] = useState('');
+  const [stationId, setStationId] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedStation, setSelectedStation] = useState(null); // Tiene traccia della stazione selezionata per il modal
   const [selectedMode, setSelectedMode] = useState(null); // Tiene traccia della modalità selezionata per il modal
@@ -35,22 +35,28 @@ export default function Devices() {
   };
 
   const handleExistingStationAdd = async () => {
-    if(!stationToken.trim()) 
+    if(!stationId.trim()) 
       return;
 
     setLoading(true);
-    await addStationToUser(uid, stationToken.trim());
-    setStationToken('');
-    setLoading(false);
+    try{
+      await addStationToUser(uid, stationId.trim());
+    } catch (e){}
+    finally {
+      setStationId('');
+      setLoading(false);
+    }
   };
 
-  const handleDelete = async (stationId) => {
+  const handleDelete = async () => {
     try {
-      if(uid === stationId.owner) {
-        await deleteStationForUser(uid, stationId);
+      if(uid == selectedStation.owner) {
+        console.log("Eliminazione permanente della stazione.");
+        await deleteStationPermanent(uid, selectedStation.id);
       }
       else{
-        await deleteStationPermanent(uid, stationId);
+        console.log("Eliminazione della stazione per l'utente.");
+        await deleteStationForUser(uid, selectedStation.id);
       }
     } catch (error) {
       console.error('Errore durante l\'eliminazione della stazione:', error);
@@ -81,9 +87,9 @@ export default function Devices() {
         <hr className="vertBar"/>
         <input
           className='stationInput'
-          placeholder='Token stazione esistente'
-          value={stationToken}
-          onChange={e => setStationToken(e.target.value)}
+          placeholder='Id stazione esistente'
+          value={stationId}
+          onChange={e => setStationId(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleExistingStationAdd()}
         />
         <button
@@ -95,7 +101,7 @@ export default function Devices() {
         </button>  
       </div>
 
-      {/* CSS Grid */}
+      {/* Griglia stazioni*/}
       {stations.length === 0 ? (
         <p style={{ color: '#888', textAlign: 'center', marginTop: 48 }}>
           Nessuna stazione. Aggiungine una sopra!
@@ -117,11 +123,11 @@ export default function Devices() {
               }}
             >
               <h3 style={{ margin: '0 0 8px 0', fontSize: 16 }}>
-                {station.nickname || station.name}
+                {station.name || 'N/D'}
               </h3>
               
               <p style={{ margin: 0, fontSize: 12, color: '#666' }}>
-                📍 {station.name}
+                📍 {station.nickname || 'N/D'}
               </p>
               
               <p style={{ margin: '8px 0 0 0', fontSize: 11, color: '#aaa', wordBreak: 'break-all' }}>
@@ -135,6 +141,8 @@ export default function Devices() {
               </p>
               
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                {/* Renderizza pulsante modifica solo se è editor */}
+                {station.role == "editor" && 
                 <button
                   style={{
                     flex: 1,
@@ -153,6 +161,7 @@ export default function Devices() {
                 >
                   <LuPen /> Modifica
                 </button>
+                }
                 <button
                   style={{
                     flex: 1,
@@ -186,9 +195,6 @@ export default function Devices() {
                   onMouseEnter={e => e.target.style.background = '#ffcdd2'}
                   onMouseLeave={e => e.target.style.background = '#ffebee'}
                   onClick={() => {
-                    /* if (window.confirm(`Sei sicuro di voler eliminare la stazione "${station.nickname || station.name}"?`)) {
-                      handleDelete(station.id);
-                      } */
                     setSelectedStation(station);
                     setConfirmModalOpen(true);
                   }}
@@ -208,7 +214,10 @@ export default function Devices() {
         body={`Sei sicuro di voler eliminare la stazione "${selectedStation.name}"?`}
         confirmText="Conferma"
         cancelText="Annulla"
-      onConfirm={() => {handleDelete(selectedStation.id);setConfirmModalOpen(false);}}
+      onConfirm={() => {
+        handleDelete();
+        setConfirmModalOpen(false);
+      }}
       onCancel={() => {setConfirmModalOpen(false);}}
     />
     )}

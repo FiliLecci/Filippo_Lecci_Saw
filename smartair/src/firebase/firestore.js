@@ -59,10 +59,10 @@ export async function createStation(uid, name) {
 }
 
 // Aggiungi la stazione all'utente
-export async function addStationToUser(uid, stationToken) {
+export async function addStationToUser(uid, stationId) {
   try {
     const addUserStation = httpsCallable(functions, "addUserStation");
-    const stationRef = await addUserStation({uid: uid, stationToken: stationToken});
+    const stationRef = await addUserStation({uid: uid, stationId: stationId});
   } catch (e) {
     console.error('Errore addStationToUser: ', e.code, e.message);
     throw e;
@@ -72,18 +72,10 @@ export async function addStationToUser(uid, stationToken) {
 // Elimina una stazione per un utente se questo non è il proprietario
 export async function deleteStationForUser(uid, stationId) {
   try {
-    const stationRef = doc(db, 'stations', stationId);
-    const stationSnap = await getDoc(stationRef);
-
-    if(!stationSnap.exists()) {
-      throw new Error('Stazione non trovata');
-    }
-    
-    const stationData = stationSnap.data();
-
     // Eliminazione del documento
     await deleteDoc(doc(db, 'users', uid, 'stations', stationId));
     console.log('Stazione rimossa per utente:', uid);
+
   } catch (e) {
     console.error('Errore deleteStationForUser:', e.code, e.message);
     throw e;
@@ -93,22 +85,21 @@ export async function deleteStationForUser(uid, stationId) {
 // Elimina una stazione in modo permanente se l'utente ne è proprietario
 export async function deleteStationPermanent(uid, stationId) {
   try {
-    const recursiveDeleteCollection = httpsCallable(functions, "recursiveDeleteCollection");
-    const res1 = await recursiveDeleteCollection({ path: `stations/${stationId}` });
-
-    console.log('Stazione eliminata permanentemente: ', res1);
-    
     const deleteStationRefs = httpsCallable(functions, "deleteAllStationRefs");
     const res2 = await deleteStationRefs({stationId: stationId});
 
     console.log('Riferimenti della stazione rimossi per tutti gli utenti: ', res2);
+    
+    const recursiveDeleteCollection = httpsCallable(functions, "recursiveDeleteCollection");
+    const res1 = await recursiveDeleteCollection({ path: `stations/${stationId}` });
+
+    console.log('Stazione eliminata permanentemente: ', res1);    
   }
   catch (e) {
     console.error('Errore deleteStationPermanent:', e.code, e.message);
     throw e;
   }
 }
-
 
 // Ascolta le ultime N letture di una stazione in realtime
 export function listenToReadings(stationId, callback, n = 20) {
@@ -136,4 +127,19 @@ export function listenToReadings(stationId, callback, n = 20) {
   }, error => {
     console.error('Errore snapshot:', error.code, error.message);
   });
+}
+
+// Ritorna il ruolo dell'utente per la stazione
+export async function getUserStationRole(uid, stationId){
+  var role = undefined;
+
+  try{
+    const getUserStationRoleFunc = httpsCallable(functions, "getUserStationRole");
+    role = await getUserStationRoleFunc({uid: uid, stationId: stationId});
+  } catch (e){
+    role = "None";
+  }
+
+  console.log(role, " ", stationId);
+  return role;
 }
