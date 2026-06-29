@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "API-KEY",
@@ -14,8 +14,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
 const functions = getFunctions(app, 'us-central1');
+const provider = new GoogleAuthProvider();
+const auth = getAuth();
 
 if (window.location.hostname === 'localhost') {
   connectFirestoreEmulator(db, 'localhost', 8080);
@@ -23,4 +24,4 @@ if (window.location.hostname === 'localhost') {
   connectFunctionsEmulator(functions, "localhost", 5002);
 }
 
-export {db, auth, functions};
+export {db, auth, functions, provider};

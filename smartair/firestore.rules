@@ -3,14 +3,13 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /stations/{stationId} {
-      // Creazione solo se si è proprietario della stazione
-      allow create: if request.auth != null && request.resource.data.owner == request.auth.uid;
+      // Creazione, aggiornament ed eliminazione solo se si è proprietario della stazione
+      allow create, update, delete: 
+        if request.auth != null && request.resource.data.owner == request.auth.uid;
       // Lettura di una stazione solo se si è nella lista utenti
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)/stations/$(stationId));
-      // Modifica solo dal proprietario
-      allow write: if request.auth != null && 
-        request.resource.data.owner == request.auth.uid;
+      allow read: 
+        if request.auth != null && 
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/stations/$(stationId));
     }
 
     match /stations/{stationId}/readings/{readingId} {
@@ -19,6 +18,7 @@ service cloud.firestore {
       allow write: if false; // solo la Cloud Function scrive le letture
     }
 
+    // Un utente può modificare e leggere solo le sue informazioni
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
