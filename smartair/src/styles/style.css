@@ -1,8 +1,26 @@
 .stationSelBtn {
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid #ddd; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 450px;
+    height: 250px;
+    padding: 12px;
+    border-radius: 16px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    overflow: hidden;
+}
+
+.stationSelBtn[data-focused="true"]{
+    background: linear-gradient(180deg, #ffffff 0%, #e3f2fd 100%);
+    border: 2px solid #2196f3' : '1px solid #e0e0e0;
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.25);
+}
+
+.stationSelBtn[data-focused="false"]{
+    background: linear-gradient(180deg, #ffffff 0%, #f9f9f9 100%);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .vertBar {

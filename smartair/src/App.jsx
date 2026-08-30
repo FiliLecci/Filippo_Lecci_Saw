@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
+import { initializeUserDatabase } from './firebase/firestore';  // ← aggiungi questo
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Devices from './pages/Devices';
@@ -28,8 +29,16 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, user => {
-      setUser(user);
+    const unsub = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        // Utente loggato - inizializza il database se necessario
+        try {
+          await initializeUserDatabase(authUser.uid);
+        } catch (e) {
+          console.error('Errore durante l\'inizializzazione:', e);
+        }
+      }
+      setUser(authUser);
       setLoading(false);
     });
     return unsub;

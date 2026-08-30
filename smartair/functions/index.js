@@ -130,7 +130,8 @@ export const createNewStation = onCall({}, async(request) => {
       owner: uid,
       visibility: 'private',
       device_token: crypto.randomUUID(),
-      createdAt: new Date()
+      createdAt: new Date(),
+      role: "editor"
     });
     
     console.log("Creazione prima lettura");

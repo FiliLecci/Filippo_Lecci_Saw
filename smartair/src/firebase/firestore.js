@@ -2,15 +2,45 @@ import { db, auth, functions } from './config';
 import {
   collection, doc, addDoc, getDoc, getDocs,
   onSnapshot, query, orderBy, limit, setDoc,
-  deleteDoc,  CollectionReference
+  deleteDoc,  CollectionReference,
+  serverTimestamp
 } from 'firebase/firestore';
 import { httpsCallable } from "firebase/functions";
 
+
 // In questo file definisco solo le funzione che hanno a che fare con firestone e che ci interagiscono direttamente.
 
-// Recupera le stazioni a cui ha accesso l'utente
+// Funzione di inizializzazione del database quando si registra un utente
+export async function initializeUserDatabase(uid) {
+  try {
+    const userRef = doc(db, 'users', uid);
+    const userSnap = await getDoc(userRef);
+
+    // Creazione del documento utente
+    if (!userSnap.exists()) {
+      console.log('Inizializzo il database per nuovo utente:', uid);
+      
+      await setDoc(userRef, {
+        email: auth.currentUser.email,
+        createdAt: serverTimestamp(),
+        theme: 'light'
+      });
+
+      console.log('Database utente creato con successo');
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    console.error('Errore initializeUserDatabase:', e.code, e.message);
+    throw e;
+  }
+}
+
+// Recupera le stazioni a cui ha accesso l'utente e ritorna un array di oggetti
 export function getUserStations(uid, callback) {
   const ref = collection(db, 'users', uid, 'stations');
+  // esegue ogni volte che cambia la collezione
   return onSnapshot(ref, async snap => {
     const stations = await Promise.all(
       snap.docs.map(async d => {
