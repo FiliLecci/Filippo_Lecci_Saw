@@ -61,13 +61,13 @@ export default function Dashboard() {
   const aqi = calcAqi(latest?.air_ppm);
 
   return (
-    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
+    <div className="dashboard-container">
       
-      {/* Selettore stazione */}
+      {/* Card delle stazioni disponibili */}
       {stations.length === 0 ? (
         <p style={{ color: '#888' }}>Nessuna stazione trovata. Aggiungine una dalla pagina Dispositivi.</p>
       ) : (
-        <div style={{ display: 'flex', gap: 12, margin: '16px 0', flexWrap: 'wrap' }}>
+        <div className="dashboard-cards-container">
           {stations.map(s => {
             const isSelected = selectedStation === s.id;
             const stationReadings = allReadings[s.id] || [];
@@ -88,28 +88,6 @@ export default function Dashboard() {
                 className="stationSelBtn"
                 data-focused = {selectedStation === s.id}
                 onClick={() => setSelectedStation(s.id)}
-                /*
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justify: 'space-between',
-                  width: '450px',
-                  height: '250px',
-                  padding: '12px',
-                  borderRadius: '16px',
-                  border: isSelected ? '2px solid #2196f3' : '1px solid #e0e0e0',
-                  background: isSelected
-                    ? 'linear-gradient(180deg, #ffffff 0%, #e3f2fd 100%)'
-                    : 'linear-gradient(180deg, #ffffff 0%, #f9f9f9 100%)',
-                  cursor: 'pointer',
-                  boxShadow: isSelected 
-                    ? '0 6px 16px rgba(33, 150, 243, 0.25)' 
-                    : '0 4px 12px rgba(0,0,0,0.05)',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left',
-                  overflow: 'hidden'
-                }}
-                */
               >
                 {/* Header Card: Nome a sinistra, Cerchio Stato a destra */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -164,6 +142,30 @@ export default function Dashboard() {
           })}
         </div>
       )}
+
+      {/* Pannello laterale di visualizzazione dettagliata della stazione*/}
+      <div className='station-view-panel'>
+        {selectedStation ? (
+          <div className='station-view-body'>
+            <div className='station-view-header'>
+
+            </div>
+            <div className='station-view-charts-container'>
+              <div className='chart-view'>
+
+              </div>
+              <div className='chart-view'>
+
+              </div>
+              <div className='chart-view'>
+
+              </div>
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+      </div>
     </div>
   );
 }
