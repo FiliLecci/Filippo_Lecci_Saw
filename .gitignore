@@ -9,6 +9,8 @@ dist-zip/
 build/
 emulator-data/
 firebase-export-*/
+smartair/firebase-debug.log
+smartair/.firebase/
 
 # Variabili d'Ambiente e Credenziali
 .env

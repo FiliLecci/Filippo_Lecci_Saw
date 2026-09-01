@@ -5,7 +5,7 @@ import {
   deleteStationForUser, deleteStationPermanent, 
   addStationToUser, getUserStationRole
 } from '../firebase/firestore';
-import {LuTrash, LuEye, LuPen} from 'react-icons/lu';
+import {LuTrash, LuEye, LuPen, LuPlus} from 'react-icons/lu';
 import { ViewDeviceModal } from '../components/ViewDeviceModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import '../index.css';
@@ -65,39 +65,39 @@ export default function Devices() {
 
   return (
     <>
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <div className="devices-container">
       <h1>Dispositivi</h1>
 
       {/* Form aggiungi stazione */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 32, height: '40px', alignItems: 'center' }}>
+      <div className="add-station-container">
         <input
-          className='stationInput'
+          className='station-input'
           placeholder="Nome stazione (es. Camera da letto)"
           value={newName}
           onChange={e => setNewName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
         />
         <button
-          className='addBtn'
+          className='add-btn'
           onClick={handleAdd}
           disabled={loading}
         >
-          {loading ? '...' : 'Aggiungi'}
+          {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
         </button>
         <hr className="vertBar"/>
         <input
-          className='stationInput'
+          className='station-input'
           placeholder='Id stazione esistente'
           value={stationId}
           onChange={e => setStationId(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleExistingStationAdd()}
         />
         <button
-          className='addBtn'
+          className='add-btn'
           onClick={handleExistingStationAdd}
           disabled={loading}
         >
-          {loading ? '...' : 'Aggiungi'}
+          {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
         </button>  
       </div>
 
@@ -107,11 +107,7 @@ export default function Devices() {
           Nessuna stazione. Aggiungine una sopra!
         </p>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 20
-        }}>
+        <div className="devices-grid">
           {stations.map(station => (
             <div
               key={station.id}
@@ -207,21 +203,21 @@ export default function Devices() {
         </div>
       )}
     </div>
-    {/* Modale di conferma eliminazione */}
+    {/* finestra di conferma eliminazione */}
     {selectedStation && (
       <ConfirmModal
         isOpen={confirmModalOpen}
         body={`Sei sicuro di voler eliminare la stazione "${selectedStation.name}"?`}
-        confirmText="Conferma"
+        confirmText="Elimina"
         cancelText="Annulla"
-      onConfirm={() => {
-        handleDelete();
-        setConfirmModalOpen(false);
-      }}
-      onCancel={() => {setConfirmModalOpen(false);}}
-    />
+        onConfirm={() => {
+          handleDelete();
+          setConfirmModalOpen(false);
+        }}
+        onCancel={() => {setConfirmModalOpen(false);}}
+      />
     )}
-    {/* Modale di visualizzazione/modifica stazione */}
+    {/* finestra di visualizzazione/modifica stazione */}
     <ViewDeviceModal
       isViewed={selectedStation !== null} 
       station={selectedStation} 

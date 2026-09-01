@@ -166,7 +166,6 @@ export default function Dashboard() {
 
             <div className='station-view-header'>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2>Dettagli per la stazione: {selectedStation.nickname || selectedStation.name}</h2>
                 <button 
                   className="close-station-view-btn"
                   onClick={() => setSelectedStation(null)}
@@ -174,6 +173,7 @@ export default function Dashboard() {
                 >
                   ✕
                 </button>
+                <h2>Dettagli per la stazione: {selectedStation.nickname || selectedStation.name}</h2>
               </div>
             </div>
 

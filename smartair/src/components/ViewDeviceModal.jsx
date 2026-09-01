@@ -7,7 +7,7 @@ import { LuClipboardPaste, LuEye } from 'react-icons/lu'
 import { GoPerson } from "react-icons/go";
 
 
-import '../styles/ViewDeviceModal.css';
+import '../styles/Modal.css';
 
 
 export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
@@ -75,8 +75,8 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
             <button
                 className="copy-btn"
                 onClick={() => navigator.clipboard.writeText(station.device_token)}
-              >
-                <LuClipboardPaste /> Copia
+              > 
+              <LuClipboardPaste /> Copia
             </button>
           </div>
         </div>

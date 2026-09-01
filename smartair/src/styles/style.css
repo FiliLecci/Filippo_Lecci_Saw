@@ -18,6 +18,21 @@ body{
   overflow: hidden;
 }
 
+.devices-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.devices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
 .dashboard-cards-container{
   width: 280px;
   background: white;
@@ -82,9 +97,16 @@ body{
     color: rgba(255, 255, 255, 0.3);
 }
 
-.addBtn {
+.add-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+
     transition: all 0.2s;
-    padding: 10px 20px;
+    padding: 8px;
     background: #2195f3;
     color: white;
     border: 1px solid #307dbd9c;
@@ -93,16 +115,25 @@ body{
     font-size: 20;
 }
 
-.addBtn:hover {
+.add-btn:hover {
     background: #1d85da;
 }
 
-.stationInput {
+.add-station-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    height: 40px;
+    align-items: center;
+}
+
+.station-input {
     flex: 1;
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #ddd;
-    font-size: 1;
+    font-size: 15px;
+    font-weight: 400;
 }
 
 .station-view-panel{
@@ -143,11 +174,12 @@ body{
     display: flex;
     justify-content: space-between;
     align-items: center;
+    vertical-align: middle;
     margin-bottom: 24px;
 }
 
 .station-view-header h2 {
-    margin: 0 0 16px 0;
+    margin: 0 0 0 10px;
     font-size: 25px;
     font-weight: 400;
     color: #333;
