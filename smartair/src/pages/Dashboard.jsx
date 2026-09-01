@@ -9,29 +9,48 @@ import { calcAqi } from './Utils';
 import '../styles/style.css';
 
 export default function Dashboard() {
-  const [stations, setStations] = useState([]);
-  const [selectedStation, setSelectedStation] = useState(null);
-  const [allReadings, setAllReadings] = useState({});
+  const [stations, setStations] = useState([]);                 // lista delle stazioni dell'utente
+  const [selectedStation, setSelectedStation] = useState(null); // stazione selezionata al momento  
+  const [allReadings, setAllReadings] = useState({});           // prime 15 letture di temperature per tutte le stazioni
+  const [readings, setReadings] = useState([]);                 // letture della stazione selezionata
   const uid = auth.currentUser?.uid;
-  const navigate = useNavigate();
 
-  // 1. Carica le stazioni dell'utente al mount
+  // carica le stazioni dell'utente
   useEffect(() => {
     if (!uid) return;
 
     const unsubscribe = getUserStations(uid, (data) => {
       setStations(data);
 
-      setSelectedStation(prev => {
-        if (prev) return prev;
-        return data[0]?.id ?? null;
-      });
+      // setSelectedStation(prev => {
+      //   if (prev) return prev;
+      //   return data[0]?.id ?? null;
+      // });
     });
 
     return () => unsubscribe && unsubscribe();
   }, [uid]);
 
-  // 2. Ascolta le letture di TUTTE le stazioni contemporaneamente
+  // lettura dei dati della stazione selezionata
+  useEffect(() => {
+    if (selectedStation === null || selectedStation === undefined) {
+      console.log('Nessuna stazione selezionata - letture non caricate');
+      return;
+    }
+    
+    console.log('Carico letture per:', selectedStation);
+    const unsub = listenToReadings(selectedStation.id, data => {
+      console.log('Letture ricevute:', data.length);
+      setReadings(data);
+    });
+    
+    return () => {
+      console.log('Unsubscribe da:', selectedStation.id);
+      unsub();
+    };
+  }, [selectedStation]);
+
+  // lettura dei dai per l'anteprima delle stazioni (ultime 15 letture)
   useEffect(() => {
     if (!stations || stations.length === 0) return;
 
@@ -55,21 +74,17 @@ export default function Dashboard() {
     };
   }, [stations]);
 
-  // Letture della stazione attualmente selezionata per i grafici grandi in basso
-  const selectedReadings = allReadings[selectedStation] || [];
-  const latest = selectedReadings.at(-1);
-  const aqi = calcAqi(latest?.air_ppm);
-
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" data-panel-open={selectedStation!==null}>
       
       {/* Card delle stazioni disponibili */}
       {stations.length === 0 ? (
-        <p style={{ color: '#888' }}>Nessuna stazione trovata. Aggiungine una dalla pagina Dispositivi.</p>
+        <p style={{ color: '#888', margin: '16px 0' }}>Nessuna stazione trovata. Aggiungine una dalla pagina Dispositivi.</p>
       ) : (
         <div className="dashboard-cards-container">
+          <h2>Le tue stazioni</h2>
+          <div className="station-cards-grid">
           {stations.map(s => {
-            const isSelected = selectedStation === s.id;
             const stationReadings = allReadings[s.id] || [];
             
             // Format dei dati per l'AreaChart della singola card
@@ -85,9 +100,9 @@ export default function Dashboard() {
             return (
               <button
                 key={s.id}
-                className="stationSelBtn"
+                className="station-btn-card"
                 data-focused = {selectedStation === s.id}
-                onClick={() => setSelectedStation(s.id)}
+                onClick={() => setSelectedStation(s)}
               >
                 {/* Header Card: Nome a sinistra, Cerchio Stato a destra */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -140,26 +155,66 @@ export default function Dashboard() {
               </button>
             );
           })}
+          </div>
         </div>
       )}
 
       {/* Pannello laterale di visualizzazione dettagliata della stazione*/}
-      <div className='station-view-panel'>
+      <div className='station-view-panel' data-open={selectedStation!== null}>
         {selectedStation ? (
           <div className='station-view-body'>
+
             <div className='station-view-header'>
-
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2>Dettagli per la stazione: {selectedStation.nickname || selectedStation.name}</h2>
+                <button 
+                  className="close-station-view-btn"
+                  onClick={() => setSelectedStation(null)}
+                  aria-label="Chiudi pannello"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
+
             <div className='station-view-charts-container'>
-              <div className='chart-view'>
 
-              </div>
               <div className='chart-view'>
-
+                <h3>Temperatura attuale: {readings[readings.length - 1]?.temp || 'N/A'}°C</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={readings}>
+                      <XAxis dataKey="timestamp" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="temp" stroke="#f76d6d" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
               </div>
+
               <div className='chart-view'>
-
+                <h3>Umidità attuale: {readings[readings.length - 1]?.humidity || 'N/A'}%</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={readings}>
+                      <XAxis dataKey="timestamp" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="humidity" stroke="#2196f3" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
               </div>
+
+              <div className='chart-view'>
+                  <h3>CO₂ Equivalente (ppm): {readings[readings.length - 1]?.air_ppm || 'N/A'}</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={readings}>
+                      <XAxis dataKey="timestamp" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="air_ppm" stroke="#ec7dda" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+              </div>
+
             </div>
           </div>
         ) : (
