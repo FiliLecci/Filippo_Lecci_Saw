@@ -1,3 +1,43 @@
-smartair/emulator-data
-smartair/firebase-export-*
-**/*.log
+# Dipendenze
+node_modules/
+.pnpm-store/
+.yarn/
+
+# Output di Build
+dist/
+dist-zip/
+build/
+emulator-data/
+firebase-export-*/
+
+# Variabili d'Ambiente e Credenziali
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# File di Log ed Errori
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache di Vite e del Browser/Strumenti
+.vite/
+.eslintcache
+.stylelintcache
+
+# Configurazioni Editor e Sistema Operativo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
