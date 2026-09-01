@@ -101,7 +101,7 @@ export default function Dashboard() {
               <button
                 key={s.id}
                 className="station-btn-card"
-                data-focused = {selectedStation === s.id}
+                data-focused = {selectedStation ? selectedStation.id === s.id : false}
                 onClick={() => setSelectedStation(s)}
               >
                 {/* Header Card: Nome a sinistra, Cerchio Stato a destra */}
@@ -131,7 +131,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* anteprima grafico della temperatura*/}
-                <div style={{ width: '100%', height: '60px', marginTop: 'auto' }}>
+                <div className="station-btn-card-preview">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                       <defs>

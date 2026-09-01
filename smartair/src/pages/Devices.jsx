@@ -68,37 +68,41 @@ export default function Devices() {
     <div className="devices-container">
       <h1>Dispositivi</h1>
 
-      {/* Form aggiungi stazione */}
+      {/* campi aggiunta stazioni */}
       <div className="add-station-container">
-        <input
-          className='station-input'
-          placeholder="Nome stazione (es. Camera da letto)"
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAdd()}
-        />
-        <button
-          className='add-btn'
-          onClick={handleAdd}
-          disabled={loading}
-        >
-          {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
-        </button>
+        <div className="add-station-inputs">
+          <input
+            className='station-input'
+            placeholder="Nome stazione (es. Camera da letto)"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+          <button
+            className='add-btn'
+            onClick={handleAdd}
+            disabled={loading}
+          >
+            {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
+          </button>
+        </div>
         <hr className="vertBar"/>
-        <input
-          className='station-input'
-          placeholder='Id stazione esistente'
-          value={stationId}
-          onChange={e => setStationId(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleExistingStationAdd()}
-        />
-        <button
-          className='add-btn'
-          onClick={handleExistingStationAdd}
-          disabled={loading}
-        >
-          {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
-        </button>  
+        <div className="add-station-inputs">
+          <input
+            className='station-input'
+            placeholder='Id stazione esistente'
+            value={stationId}
+            onChange={e => setStationId(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleExistingStationAdd()}
+          />
+          <button
+            className='add-btn'
+            onClick={handleExistingStationAdd}
+            disabled={loading}
+          >
+            {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
+          </button> 
+        </div>
       </div>
 
       {/* Griglia stazioni*/}
@@ -111,18 +115,13 @@ export default function Devices() {
           {stations.map(station => (
             <div
               key={station.id}
-              style={{
-                padding: 16,
-                background: 'white',
-                borderRadius: 12,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}
+              className='devices-item'
             >
               <h3 style={{ margin: '0 0 8px 0', fontSize: 16 }}>
                 {station.name || 'N/D'}
               </h3>
               
-              <p style={{ margin: 0, fontSize: 12, color: '#666' }}>
+              <p style={{ margin: 0, fontSize: 12, color: '#d3d3d3' }}>
                 📍 {station.nickname || 'N/D'}
               </p>
               
@@ -136,7 +135,7 @@ export default function Devices() {
                 </code>
               </p>
               
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <div className="station-btn-group">
                 {/* Renderizza pulsante modifica solo se è editor */}
                 {station.role == "editor" && 
                 <button
