@@ -28,6 +28,7 @@ setGlobalOptions({ maxInstances: 10 });
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
 
 admin.initializeApp();
 
@@ -210,4 +211,69 @@ export const getUserStationRole = onCall({}, async(request) => {
   }
 
   return userStationSnap.data().role;
+});
+
+export const addReading = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, X-Device-Token');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    const deviceToken = req.get('X-Device-Token');
+    const { station_id, temp, humidity, air_ppm, air_raw } = req.body;
+
+    console.log('Richiesta ricevuta:', { station_id, temp, humidity, air_ppm });
+
+    if (!deviceToken || !station_id || temp === undefined || humidity === undefined || air_ppm === undefined) {
+      console.error('Campi mancanti');
+      return res.status(400).json({ error: 'Campi richiesti mancanti' });
+    }
+
+    const stationRef = admin.firestore().collection('stations').doc(station_id);
+    const stationSnap = await stationRef.get();
+
+    if (!stationSnap.exists) {
+      console.error('Stazione non trovata:', station_id);
+      return res.status(404).json({ error: 'Stazione non trovata' });
+    }
+
+    const stationData = stationSnap.data();
+    if (stationData.device_token !== deviceToken) {
+      console.error('Token non valido');
+      return res.status(403).json({ error: 'Token non valido' });
+    }
+
+    let aqi = 'good';
+    if (air_ppm >= 600 && air_ppm < 800) aqi = 'good';
+    else if (air_ppm >= 800 && air_ppm < 1000) aqi = 'moderate';
+    else if (air_ppm >= 1000 && air_ppm < 1500) aqi = 'poor';
+    else if (air_ppm >= 1500) aqi = 'hazardous';
+
+    await stationRef.collection('readings').add({
+      temp: parseInt(temp),
+      humidity: parseInt(humidity),
+      air_ppm: parseFloat(air_ppm),
+      air_raw: parseInt(air_raw),
+      aqi: aqi,
+      timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(req.body.timestamp) * 1000)),
+      receivedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log('✓ Lettura salvata');
+
+    res.json({ 
+      ok: true, 
+      message: 'Lettura salvata con successo',
+      aqi: aqi
+    });
+
+  } catch (error) {
+    console.error('Errore:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
