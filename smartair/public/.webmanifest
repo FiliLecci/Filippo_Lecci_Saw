@@ -24,9 +24,7 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#ffffff",
   "display": "standalone",
   "scope": "/",
-  "theme_color": "#2196f3",
   "description": "Monitora e controlla la qualità dell'aria in tempo reale"
 }

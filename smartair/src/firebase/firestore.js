@@ -93,6 +93,8 @@ export async function addStationToUser(uid, stationId) {
   try {
     const addUserStation = httpsCallable(functions, "addUserStation");
     const stationRef = await addUserStation({uid: uid, stationId: stationId});
+
+    return stationRef.id;
   } catch (e) {
     console.error('Errore addStationToUser: ', e.code, e.message);
     throw e;

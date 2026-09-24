@@ -1,39 +1,14 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-import { setGlobalOptions } from "firebase-functions";
-import { onRequest } from "firebase-functions/https";
-import { logger }  from "firebase-functions/logger";
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
-
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
-
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import { setGlobalOptions } from "firebase-functions/v2";
+import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
+import admin from "firebase-admin";
+import crypto from "crypto";
 
 admin.initializeApp();
 
+setGlobalOptions({ maxInstances: 10 });
+
 // Elimina una stazione e tutte le sue misurazioni
-export const recursiveDeleteCollection = onCall({}, async (request) => {
+export const recursiveDeleteCollection = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Operazione non autorizzata.");
   }
@@ -45,88 +20,77 @@ export const recursiveDeleteCollection = onCall({}, async (request) => {
 
   try {
     const db = admin.firestore();
-    
-    // I documenti hanno path con un numero pari di segmenti, mentre le collezioni sono numeri dispari.
     const segments = path.trim().replace(/^\/+|\/+$/g, "").split("/");
     const isDocument = segments.length % 2 === 0;
 
-    let ref;
-    if (isDocument) {
-      console.log(`[Auto-Detect] Rilevato DOCUMENTO per il percorso: ${path}`);
-      ref = db.doc(path);
-    } else {
-      console.log(`[Auto-Detect] Rilevata COLLEZIONE per il percorso: ${path}`);
-      ref = db.collection(path);
-    }
-
-    // Esegue la cancellazione ricorsiva sul riferimento rilevato
+    const ref = isDocument ? db.doc(path) : db.collection(path);
     await db.recursiveDelete(ref);
     
     return { 
       success: true, 
-      message: `Eliminazione ricorsiva completata con successo per ${isDocument ? 'il documento' : 'la collezione'}: '${path}'` 
+      message: `Eliminazione ricorsiva completata per ${isDocument ? 'documento' : 'collezione'}: '${path}'` 
     };
   } catch (error) {
-    console.error("Errore durante la cancellazione ricorsiva:", error);
+    console.error("Errore cancellazione ricorsiva:", error);
     throw new HttpsError("internal", "Impossibile completare la cancellazione automatica.");
   }
 });
 
 // Elimina tutti i riferimenti ad una stazione
-export const deleteAllStationRefs = onCall({}, async (request) => {
-  // Verifica autenticazione
+export const deleteAllStationRefs = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Operazione non autorizzata.");
   }
 
   const stationId = request.data.stationId;
-
-  console.log(stationId);
-
-  if(!stationId){
+  if (!stationId) {
     throw new HttpsError("invalid-argument", "L'id della stazione è obbligatorio");
   }
 
   try {
-    console.log("Inizio eliminazione in batch");
+    const db = admin.firestore();
+    const usersSnap = await db.collection('users').get();
+    
+    // Suddivisione in lotti da max 500 operazioni per limite Firestore
+    const batches = [];
+    let currentBatch = db.batch();
+    let count = 0;
 
-    // Usa batch per eliminare atomicamente
-    const batch = admin.firestore().batch();
+    usersSnap.forEach((userDoc) => {
+      const userStationRef = db.doc(`users/${userDoc.id}/stations/${stationId}`);
+      currentBatch.delete(userStationRef);
+      count++;
 
-    // Elimina il riferimento da tutti gli utenti
-    const usersSnap = await admin.firestore().collection('users').get();
-    console.log(usersSnap.size);
-    usersSnap.forEach(userDoc => {
-      const userStationRef = admin.firestore()
-      .doc(`users/${userDoc.id}/stations/${stationId}`);
-      console.log("user: ", userDoc.id, " doc: ", userStationRef.id);
-      batch.delete(userStationRef);
+      if (count === 500) {
+        batches.push(currentBatch.commit());
+        currentBatch = db.batch();
+        count = 0;
+      }
     });
 
-    // Esegui tutte le operazioni
-    await batch.commit();
+    if (count > 0) {
+      batches.push(currentBatch.commit());
+    }
 
+    await Promise.all(batches);
     return { success: true, message: 'Stazione eliminata' };
-
   } catch (error) {
     console.error('Errore deleteStation:', error);
     throw new HttpsError('internal', error.message);
   }
 });
 
-// Crea una nuova stazione e la assegna all'utente che la ha creata
-export const createNewStation = onCall({}, async(request) => {
-  // Verifica l'autenticazione dell'utente
+// Crea una nuova stazione
+export const createNewStation = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
   }
 
   const { uid, name } = request.data;
+  const db = admin.firestore();
 
   try {
-    console.log("Creazione stazione principale");
-    // Scrittura stazione principale
-    const stationRef = await admin.firestore().collection('stations').add({
+    const stationRef = await db.collection('stations').add({
       name,
       owner: uid,
       visibility: 'private',
@@ -135,85 +99,85 @@ export const createNewStation = onCall({}, async(request) => {
       role: "editor"
     });
     
-    console.log("Creazione prima lettura");
-    // Scrittura sottocollezione readings
-    await admin.firestore().collection(`stations/${stationRef.id}/readings`).add({
+    await db.collection(`stations/${stationRef.id}/readings`).add({
       temp: 0,
       humidity: 0,
       air_ppm: 0,
-      timestamp:  new Date()
+      timestamp: new Date()
     });
     
-    console.log("Aggiunta riferimento per l'utente");
-    // Scrittura riferimento utente
-    await admin.firestore().doc(`users/${uid}/stations/${stationRef.id}`).set({
+    await db.doc(`users/${uid}/stations/${stationRef.id}`).set({
       role: 'owner',
       nickname: name
     });
 
-    console.log("Creazione completata");
     return { stationId: stationRef.id };
-
   } catch (error) {
-    console.error(error.message);
-    throw new HttpsError("internal", "Errore durante la scrittura su Firestore", error);
+    console.error("Errore createNewStation:", error.message);
+    throw new HttpsError("internal", "Errore durante la scrittura su Firestore");
   }
 });
 
 // Aggiunge una stazione esistente ad un utente
-export const addUserStation = onCall({}, async(request) => {
+export const addUserStation = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
   }
 
   const { uid, stationId } = request.data;
+  const db = admin.firestore();
   
   try {
-    // Controllo se la stazione esiste
-    const stationRef = admin.firestore().doc(`stations/${stationId}`);
+    const stationRef = db.collection('stations').doc(stationId);
     const stationSnap = await stationRef.get();
     
-    if(!stationRef){
-      throw new HttpsError("internal", "Non esiste una stazione per l'id specificato");
+    if (!stationSnap.exists) {
+      throw new HttpsError("not-found", "Stazione non trovata");
     }
 
-    const stationUserSnap = await admin.firestore().collection(`users/${uid}/stations`).get();
+    const userStationRef = db.collection('users').doc(uid).collection('stations').doc(stationId);
+    const userStationSnap = await userStationRef.get();
     
-    stationUserSnap.forEach(doc => {
-      if(doc.id === stationRef.id){
-        throw new HttpsError("internal", "La stazione è già assegnata all'utente");
-      }
+    if (userStationSnap.exists) {
+      throw new HttpsError("already-exists", "La stazione è già assegnata all'utente");
+    }
+
+    const stationData = stationSnap.data();
+    const role = stationData.owner === uid ? "editor" : "visualizzatore";
+
+    await userStationRef.set({
+      nickname: stationData.name,
+      role: role
     });
 
-    await admin.firestore().collection(`users/${uid}/stations`).doc(stationId).set({
-      nickname: stationSnap.data().name,
-      role: stationSnap.owner == uid ? "editor" : "visualizzatore"
-    });
-
-    console.log("Aggiunta stazione " + stationId + " per l'utente " + uid);
-
+    return { success: true, stationId };
   } catch (error) {
-    console.error(error.message);
-    throw new HttpsError("cancelled", "Errore durante l'aggiunta della stazione", error);
+    console.error('Errore addUserStation:', error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
-// Ritorna il ruolo dell'utente per la stazione indicata
-export const getUserStationRole = onCall({}, async(request) => {
-  const {uid, stationId} = request.data;
+// 5. Ritorna il ruolo dell'utente per la stazione
+export const getUserStationRole = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
+  }
 
-  // Controlla se la stazione è assegnata all'utente
-  const userStationRef = admin.firestore().doc(`users/${uid}/stations/${stationId}`);
+  const { uid, stationId } = request.data;
+  const db = admin.firestore();
+
+  const userStationRef = db.doc(`users/${uid}/stations/${stationId}`);
   const userStationSnap = await userStationRef.get();
 
-  if(!userStationSnap.exists){
-    throw new HttpsError("internal", "La stazione non è assegnata all'utente");
+  if (!userStationSnap.exists) {
+    throw new HttpsError("not-found", "La stazione non è assegnata all'utente");
   }
 
-  return userStationSnap.data().role;
+  return { role: userStationSnap.data().role };
 });
 
-export const addReading = functions.https.onRequest(async (req, res) => {
+// 6. Aggiunge una lettura da dispositivo tramite HTTP
+export const addReading = onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, X-Device-Token');
@@ -225,26 +189,21 @@ export const addReading = functions.https.onRequest(async (req, res) => {
 
   try {
     const deviceToken = req.get('X-Device-Token');
-    const { station_id, temp, humidity, air_ppm, air_raw } = req.body;
-
-    console.log('Richiesta ricevuta:', { station_id, temp, humidity, air_ppm });
+    const { station_id, temp, humidity, air_ppm, air_raw, timestamp } = req.body;
+    const db = admin.firestore();
 
     if (!deviceToken || !station_id || temp === undefined || humidity === undefined || air_ppm === undefined) {
-      console.error('Campi mancanti');
       return res.status(400).json({ error: 'Campi richiesti mancanti' });
     }
 
-    const stationRef = admin.firestore().collection('stations').doc(station_id);
+    const stationRef = db.collection('stations').doc(station_id);
     const stationSnap = await stationRef.get();
 
     if (!stationSnap.exists) {
-      console.error('Stazione non trovata:', station_id);
       return res.status(404).json({ error: 'Stazione non trovata' });
     }
 
-    const stationData = stationSnap.data();
-    if (stationData.device_token !== deviceToken) {
-      console.error('Token non valido');
+    if (stationSnap.data().device_token !== deviceToken) {
       return res.status(403).json({ error: 'Token non valido' });
     }
 
@@ -260,20 +219,13 @@ export const addReading = functions.https.onRequest(async (req, res) => {
       air_ppm: parseFloat(air_ppm),
       air_raw: parseInt(air_raw),
       aqi: aqi,
-      timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(req.body.timestamp) * 1000)),
+      timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(timestamp) * 1000)),
       receivedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    console.log('✓ Lettura salvata');
-
-    res.json({ 
-      ok: true, 
-      message: 'Lettura salvata con successo',
-      aqi: aqi
-    });
-
+    res.json({ ok: true, message: 'Lettura salvata con successo', aqi });
   } catch (error) {
-    console.error('Errore:', error);
+    console.error('Errore addReading:', error);
     res.status(500).json({ error: error.message });
   }
 });

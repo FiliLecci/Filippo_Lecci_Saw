@@ -4,7 +4,7 @@ import { auth } from '../firebase/config';
 import { getUserStations, listenToReadings } from '../firebase/firestore';
 import { LineChart, AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { calcAqi } from './Utils';
+import { calcAqi } from './utils';
 
 import '../styles/style.css';
 
@@ -21,11 +21,6 @@ export default function Dashboard() {
 
     const unsubscribe = getUserStations(uid, (data) => {
       setStations(data);
-
-      // setSelectedStation(prev => {
-      //   if (prev) return prev;
-      //   return data[0]?.id ?? null;
-      // });
     });
 
     return () => unsubscribe && unsubscribe();

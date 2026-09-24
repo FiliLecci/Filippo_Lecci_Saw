@@ -6,8 +6,8 @@ import {
   addStationToUser, getUserStationRole
 } from '../firebase/firestore';
 import {LuTrash, LuEye, LuPen, LuPlus} from 'react-icons/lu';
-import { ViewDeviceModal } from '../components/ViewDeviceModal';
-import { ConfirmModal } from '../components/ConfirmModal';
+import { ViewDeviceModal } from '../components/viewDeviceModal';
+import { ConfirmModal } from '../components/confirmModal';
 import '../index.css';
 import '../styles/style.css';
 
