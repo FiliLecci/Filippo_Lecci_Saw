@@ -57,6 +57,7 @@ export function getUserStations(uid, callback) {
   });
 }
 
+// Recupera info dell'utente identificado da un uid
 export async function getUserInfo(uid) {
   const userRef = doc(db, 'users', uid);
   const userSnap = await getDoc(userRef);
@@ -174,4 +175,24 @@ export async function getUserStationRole(uid, stationId){
 
   console.log(role, " ", stationId);
   return role;
+}
+
+// Genera letture casuali per la stazione specificata
+export async function generateTestReadings(stationId){
+  try {
+
+  } catch (e) {
+    console.error("Errore generazione dati di test: ", e.code, e.message);
+    throw e;
+  }
+}
+
+// Genera una lettura oltre la soglia per la stazione specificata e nell'ambito indicato (umidità, temperatura o aqi)
+export async function generateLimitReading(stationId){
+  try {
+
+  } catch (e) {
+    console.error("Errore generazione lettura oltre il limite: ", e.code, e.message);
+    throw e;
+  }
 }

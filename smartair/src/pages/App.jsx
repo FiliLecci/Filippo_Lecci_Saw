@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase/config';
-import { initializeUserDatabase } from './firebase/firestore';  // ← aggiungi questo
-import Login from './pages/login';
-import Dashboard from './pages/dashboard';
-import Devices from './pages/devices';
-import Account from './pages/account';
-import Sidebar from './components/sidebar';
+import { auth } from '../firebase/config';
+import { initializeUserDatabase } from '../firebase/firestore';  // ← aggiungi questo
+import Login from './login';
+import Dashboard from './dashboard';
+import Devices from './devices';
+import Account from './account';
+import Sidebar from '../components/sidebar';
 
 function LayoutWrapper() {
   return (
