@@ -8,6 +8,7 @@ import Dashboard from './dashboard';
 import Devices from './devices';
 import Account from './account';
 import Sidebar from '../components/sidebar';
+import DevicesTesting  from './devicesTesting';
 
 function LayoutWrapper() {
   return (
@@ -57,6 +58,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/devices" element={<Devices />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/devicesTesting" element={<DevicesTesting />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" />} />

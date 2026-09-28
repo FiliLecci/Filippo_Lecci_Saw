@@ -34,10 +34,13 @@ export default function Dashboard() {
     }
     
     console.log('Carico letture per:', selectedStation);
-    const unsub = listenToReadings(selectedStation.id, data => {
-      console.log('Letture ricevute:', data.length);
-      setReadings(data);
-    });
+    const unsub = listenToReadings(
+      selectedStation.id, 
+      data => {
+        console.log('Letture ricevute:', data.length);
+        setReadings(data);
+      },
+      50);
     
     return () => {
       console.log('Unsubscribe da:', selectedStation.id);

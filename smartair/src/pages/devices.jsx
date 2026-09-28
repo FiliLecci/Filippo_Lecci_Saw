@@ -51,8 +51,8 @@ export default function Devices() {
   const handleDelete = async () => {
     try {
       if(uid == selectedStation.owner) {
-        console.log("Eliminazione permanente della stazione.");
-        await deleteStationPermanent(uid, selectedStation.id);
+        console.log("Eliminazione permanente della stazione ", selectedStation.id);
+        await deleteStationPermanent(selectedStation.id);
       }
       else{
         console.log("Eliminazione della stazione per l'utente.");
@@ -61,6 +61,8 @@ export default function Devices() {
     } catch (error) {
       console.error('Errore durante l\'eliminazione della stazione:', error);
     }
+
+    setSelectedStation(null);
   };
 
   return (
@@ -170,8 +172,10 @@ export default function Devices() {
                   }}
                   onMouseEnter={e => e.target.style.background = '#eeeeee'}
                   onMouseLeave={e => e.target.style.background = '#f5f5f5'}
-                  onClick={() => {setSelectedStation(station); 
-                                  setSelectedMode('view');}}
+                  onClick={() => {
+                    setSelectedStation(station); 
+                    setSelectedMode('view');
+                  }}
                 >
                   <LuEye /> Visualizza
                 </button>

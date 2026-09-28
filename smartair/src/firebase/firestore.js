@@ -79,10 +79,12 @@ export async function modifyStationNickname(uid, stationId, newNickname) {
 // Crea una nuova stazione e la associa all'utente
 export async function createStation(uid, name) {
   try {
+
     const createNewStation = httpsCallable(functions, "createNewStation");
     const stationRef = await createNewStation({uid: uid, name: name});
 
     return stationRef.id;
+
   } catch (e) {
     console.error('Errore createStation:', e.code, e.message);
     throw e;
@@ -116,7 +118,9 @@ export async function deleteStationForUser(uid, stationId) {
 }
 
 // Elimina una stazione in modo permanente se l'utente ne è proprietario
-export async function deleteStationPermanent(uid, stationId) {
+export async function deleteStationPermanent(stationId) {
+  console.log("Inizio eliminazione della stazione: " + stationId);
+
   try {
     const deleteStationRefs = httpsCallable(functions, "deleteAllStationRefs");
     const res2 = await deleteStationRefs({stationId: stationId});
@@ -181,15 +185,27 @@ export async function getUserStationRole(uid, stationId){
 export async function generateTestReadings(stationId){
   try {
 
+    const generateTestReadingsFunction = httpsCallable(functions, "generateTestReadings");
+    await generateTestReadingsFunction({stationId: stationId});
+
   } catch (e) {
     console.error("Errore generazione dati di test: ", e.code, e.message);
     throw e;
   }
 }
 
-// Genera una lettura oltre la soglia per la stazione specificata e nell'ambito indicato (umidità, temperatura o aqi)
-export async function generateLimitReading(stationId){
+/* Genera una lettura oltre la soglia per la stazione specificata e per il tipo indicato
+ * Tipi accettati:
+ * "TEMP_LIMIT"     temperatura oltre la soglia
+ * "HUM_LIMIT"      umidità oltre la soglia
+ * "PPM_LIMIT"      ppm oltre la soglia
+ * "ALL"            tutti i valori oltre la soglia
+ */
+export async function generateLimitReading(stationId, limitType){
   try {
+
+    const generateLimitReadingFunction= httpsCallable(functions, "generateLimitReading");
+    await generateLimitReadingFunction({stationId: stationId, type: limitType});
 
   } catch (e) {
     console.error("Errore generazione lettura oltre il limite: ", e.code, e.message);

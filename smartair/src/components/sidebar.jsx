@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config.js';
+import { LuBug, LuWrench, LuChartColumnStacked, LuUser } from "react-icons/lu";
 import MobileNav from './mobileNav.jsx';
 
 import '../styles/Sidebar.css';
@@ -13,8 +14,9 @@ export default function Sidebar() {
   const [showAccount, setShowAccount] = useState(false);
 
   const menuItems = [
-    { label: 'Dashboard', path: '/', icon: '📊' },
-    { label: 'Dispositivi', path: '/devices', icon: '🔧' },
+    { label: 'Dashboard', path: '/', icon: <LuChartColumnStacked /> },
+    { label: 'Dispositivi', path: '/devices', icon: <LuWrench /> },
+    { label: 'Testing', path: '/devicesTesting', icon: <LuBug />}
   ];
 
   const isActive = path => location.pathname === path;
@@ -50,7 +52,7 @@ export default function Sidebar() {
           onClick={() => setShowAccount(!showAccount)}
           className="acc-btn"
         >
-          👤 {user?.email?.split('@')[0] || 'Account'}
+          <LuUser /> {user?.email?.split('@')[0] || 'Account'}
         </button>
 
         {showAccount && (
