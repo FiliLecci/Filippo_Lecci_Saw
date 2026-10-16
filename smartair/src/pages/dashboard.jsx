@@ -3,7 +3,6 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getUserStations, listenToReadings } from '../firebase/firestore';
 import { LineChart, AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { useNavigate } from 'react-router-dom';
 import { calcAqi } from './utils';
 
 import '../styles/style.css';

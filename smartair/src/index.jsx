@@ -1,30 +1,47 @@
-import React from 'react';
+import {StrictMode} from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './pages/App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
+  <StrictMode>
     <App />
-  </React.StrictMode>
+  </StrictMode>
 );
-
-// inizializzazione del canale per messaggi tra main thread e worker thread
-const msgChannel = new MessageChannel();
-
-// handler dei messaggi in arrivo dal service worker
-msgChannel.port1.onmessage = (event) => {
-  console.log("Messaggio ricevuto dal Service Worker: ", event.data);
-};
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registrato:', registration.scope);
+      await navigator.serviceWorker.register('/sw.js').then(
+        (registration) => console.log('Service Worker registrato: ', registration)
+      );
+
+      // Aspetta che il SW sia attivo
+      await navigator.serviceWorker.ready;
+
     } catch (error) {
       console.error('Registrazione fallita:', error.name, error.message);
+    }
+  });
+}
+
+if (!'Notification' in window){
+  alert("Questo browser non supporta le notifiche. Alcune funzionalità potrebbero non funzionare correttamente.");
+}
+else if (Notification.permission !== 'granted') { 
+  // se non è ancora stato dato il permesso per le notifiche lo chiede
+  Notification.requestPermission().then((permission) => {
+    if (permission !== 'granted') { // permesso negato
+      alert("Le notifiche sono state disabilitate. Alcune funzionalità potrebbero non funzionare correttamente.");
+    }
+    else { // permesso concesso
+      var notification = new Notification("SmartAir", {
+        lang: "it",
+        body: "Notifiche disabilitate",
+        icon: "/logo.png",
+        vibrate: [200, 100, 200]
+      });
     }
   });
 }

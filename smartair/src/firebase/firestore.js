@@ -1,9 +1,8 @@
 import { db, auth, functions } from './config';
 import {
-  collection, doc, addDoc, getDoc, getDocs,
+  collection, doc, getDoc,
   onSnapshot, query, orderBy, limit, setDoc,
-  deleteDoc,  CollectionReference,
-  serverTimestamp
+  deleteDoc, serverTimestamp
 } from 'firebase/firestore';
 import { httpsCallable } from "firebase/functions";
 
