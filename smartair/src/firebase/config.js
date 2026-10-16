@@ -25,28 +25,4 @@ if (window.location.hostname === 'localhost') {
   connectFunctionsEmulator(functions, "localhost", 5002);
 }
 
-// abilita le notifiche push e restituisce il token FCM se l'utente ha concesso il permesso
-export async function enablePush() {
-  if (!(await isSupported())) return null;
-
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") return null;
-
-  const messaging = getMessaging(app);
-  const registration = await navigator.serviceWorker.ready; // SW di vite-plugin-pwa
-
-  const token = await getToken(messaging, {
-    vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-    serviceWorkerRegistration: registration,
-  });
-
-  return token;
-}
-
-// messaggi ricevuti quando l'app è aperta in primo piano
-export function listenForeground(callback) {
-  const messaging = getMessaging(app);
-  return onMessage(messaging, callback);
-}
-
 export {app, db, auth, functions, provider};
