@@ -5,6 +5,7 @@ import { getUserStations, listenToReadings } from '../firebase/firestore';
 import { LineChart, AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { calcAqi } from './utils';
 
+import { sendNotification } from '../components/notifications'
 import '../styles/style.css';
 
 export default function Dashboard() {
@@ -27,29 +28,34 @@ export default function Dashboard() {
 
   // lettura dei dati della stazione selezionata
   useEffect(() => {
-    if (selectedStation === null || selectedStation === undefined) {
-      console.log('Nessuna stazione selezionata - letture non caricate');
-      return;
-    }
-    
-    console.log('Carico letture per:', selectedStation);
+    if (selectedStation == null) return;
+
     const unsub = listenToReadings(
-      selectedStation.id, 
-      data => {
-        console.log('Letture ricevute:', data.length);
+      selectedStation.id,
+      (data) => {
         setReadings(data);
+
+        // salva le letture nella cache
+        caches.open("stazioni").then((cache) =>
+          cache.put(
+            `/cache/letture/${selectedStation.id}`,
+            new Response(JSON.stringify(data), {
+              headers: { "Content-Type": "application/json" },
+            })
+          )
+        ).catch((e) => console.error("Errore cache:", e));
       },
-      50);
-    
-    return () => {
-      console.log('Unsubscribe da:', selectedStation.id);
-      unsub();
-    };
+      50
+    );
+
+    return () => unsub();
   }, [selectedStation]);
 
   // lettura dei dai per l'anteprima delle stazioni (ultime 15 letture)
   useEffect(() => {
     if (!stations || stations.length === 0) return;
+
+    // TODO controlliamo prima se nella cache ci sono dati per la stazione selezionata e usiamo quelli
 
     const unsubscribers = [];
 

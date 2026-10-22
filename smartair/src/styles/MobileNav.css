@@ -1,80 +1,61 @@
 .hamburger {
   display: none;
   position: fixed;
-  top: 16px;
-  left: 16px;
-  background: white;
-  color: white;
-  border: none;
-  border-radius: 8px;
+  top: 14px;
+  left: 14px;
+  align-items: center;
+  justify-content: center;
   width: 42px;
   height: 42px;
-  font-size: 24px;
+  background: #172638;
+  color: white;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 11px;
+  box-shadow: 0 5px 16px rgba(23,38,56,.18);
+  font-size: 23px;
   cursor: pointer;
-  z-index: 50;
+  z-index: 1001;
 }
+.hamburger:hover { background: #24384e; }
 
-@media (max-width: 1100px) {
-  .hamburger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
+@media (max-width: 1099px) { .hamburger { display: flex; } }
 
 .mobile-drawer {
   position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #1a1a1a30;
-  z-index: 40;
+  background: rgba(14, 28, 43, .48);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
 }
-
 .drawer-content {
   display: flex;
   flex-direction: column;
   position: fixed;
   top: 0;
   left: 0;
-  width: 280px;
-  height: 100vh;
-  background: #1a1a1a;
-  padding: 80px 16px 16px;
+  width: min(280px, 86vw);
+  height: 100dvh;
+  padding: 76px 16px 16px;
   overflow-y: auto;
-  animation: slideFromLeft 0.3s ease-out;
+  background: #172638;
+  box-shadow: 12px 0 40px rgba(9, 22, 37, .2);
+  animation: slideFromLeft .24s ease-out;
 }
-
-@keyframes slideFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.drawer-content h3 {
-  margin: 0 0 16px 0;
-}
-
+@keyframes slideFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.drawer-content h3 { margin: 0 0 16px; color: white; }
 .drawer-item {
   display: block;
   width: 100%;
   padding: 12px;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  background: transparent;
+  color: #d5e0ec;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  margin-bottom: 6px;
   cursor: pointer;
   text-align: left;
 }
-
-.drawer-item[data-selected="true"] {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
+.drawer-item:hover { background: rgba(255,255,255,.08); color: white; }
+.drawer-item[data-selected="true"] { background: #2583f5; color: white; border-color: #2583f5; }

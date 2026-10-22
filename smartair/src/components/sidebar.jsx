@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config.js';
 import { LuBug, LuWrench, LuChartColumnStacked, LuUser } from "react-icons/lu";
+import { IoIosArrowUp, IoIosArrowDown } from "react-icons/io";
 import MobileNav from './mobileNav.jsx';
 
 import '../styles/Sidebar.css';
@@ -16,14 +17,17 @@ export default function Sidebar() {
   const menuItems = [
     { label: 'Dashboard', path: '/', icon: <LuChartColumnStacked /> },
     { label: 'Dispositivi', path: '/devices', icon: <LuWrench /> },
-    { label: 'Testing', path: '/devicesTesting', icon: <LuBug />}
+    { label: 'Testing', path: '/devicesTesting', icon: <LuBug />},
   ];
 
   const isActive = path => location.pathname === path;
 
   return (
     <>
+    {/* Mostra un'icona per il menù su schermi piccoli */}
     <MobileNav menuItems={menuItems} />
+
+    {/* Sidebar per schermi normali */}
     <div className="sidebar-body">
       {/* Header */}
       <div className="sidebar-header">
@@ -53,10 +57,12 @@ export default function Sidebar() {
           className="acc-btn"
         >
           <LuUser /> {user?.email?.split('@')[0] || 'Account'}
+          &emsp;
+          {showAccount ? <IoIosArrowUp /> : <IoIosArrowDown />}
         </button>
 
         {showAccount && (
-          <div style={{ marginTop: 8 }}>
+          <div className="acc-dropdown" style={{ marginTop: 8 }}>
             <button
               onClick={() => navigate('/account')}
               data-active={isActive('/account')}
@@ -64,6 +70,7 @@ export default function Sidebar() {
             >
               Impostazioni
             </button>
+
             <button
               onClick={() => signOut(auth)}
               className="acc-exit-btn"

@@ -7,24 +7,29 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      strategies: "injectManifest",
-      srcDir: "src",
-      filename: "../public/sw.js",
-      registerType: "autoUpdate",
-      injectManifest: {
-        globPatterns: ["**/*.{js,css,html,png,svg,ico,webmanifest}"],
-      },
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: "SmartAir",
-        short_name: "SmartAir",
-        display: "standalone",
-        start_url: "/",
+        name: 'Smartair',
+        short_name: 'Smartair',
+        description: 'Monitoraggio e gestione dei dispositivi smart per la qualità dell\'aria',
+        theme_color: '#060020',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
         icons: [
-          { src: "/icons/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "/icons/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
-        ],
-      },
-      devOptions: { enabled: true, type: "module" },
-    }),
+          {
+            src: 'icons/android-chrome-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      }
+    })
   ],
 })

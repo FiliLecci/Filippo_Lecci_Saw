@@ -7,15 +7,6 @@
     <meta name="theme-color" content="#2196f3" />
     <meta name="description" content="SmartAir - Monitora la qualità dell'aria" />
     <link rel="manifest" href=".webmanifest" />
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('%PUBLIC_URL%/sw.js').then((registration) => {
-          console.log('Service Worker registrato:', registration);
-        }).catch((error) => {
-          console.error('Errore registrazione Service Worker:', error);
-        });
-      }
-    </script>
     <title>SmartAir</title>
   </head>
   <body>

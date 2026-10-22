@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { listenForeground } from "../firebase/config.js";
 import { initializeUserDatabase } from '../firebase/firestore';
 
 import Login from './login';
@@ -11,11 +10,14 @@ import Devices from './devices';
 import Account from './account';
 import Sidebar from '../components/sidebar';
 import DevicesTesting  from './devicesTesting';
+import Notifications from '../components/notifications';
 
 function LayoutWrapper() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Sidebar */}
       <Sidebar />
+      
       <main style={{
         flex: 1,
         overflow: 'auto',
@@ -23,6 +25,8 @@ function LayoutWrapper() {
       }}>
         <Outlet />
       </main>
+      {/* Icona notifiche */}
+      <Notifications />
     </div>
   );
 }
@@ -48,18 +52,6 @@ function App() {
     
     return unsub;
   }, []);
-
-  // listener per i messaggi in primo piano
-  useEffect(() => {
-    if (!user) return; // ascolta solo se loggato
-
-    const unsubscribe = listenForeground((payload) => {
-      console.log("Messaggio in primo piano:", payload);
-      // visualizza una notifica o aggiorna lo stato dell'applicazione in base al payload
-    });
-
-    return unsubscribe;
-  }, [user]);
 
   if (loading) return <p style={{ textAlign: 'center', marginTop: 48 }}>Caricamento...</p>;
 
