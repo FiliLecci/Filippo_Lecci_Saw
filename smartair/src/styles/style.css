@@ -52,6 +52,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   background: var(--sa-bg);
 }
 
+.dashboard-container p {
+  padding: 10px;
+  color: #888;
+}
+
 .dashboard-cards-container {
   width: 100%;
   min-width: 0;

@@ -2,6 +2,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { LuBell } from "react-icons/lu";
 import { IoIosArrowUp } from "react-icons/io";
 import { toast } from 'react-toastify'; 
+import { addNotificationToUser } from '../firebase/firestore';
 
 import '../styles/Notifications.css';
 
@@ -34,10 +35,10 @@ function notificationBodyConstructor (title, body) {
     );
 };
 
-export function sendNotification (data) {
-    let {title, body, severity} = data;
+export function sendNotification (uid, data) {
     setNewNotifications(true);
-    toast(notificationBodyConstructor(title, body));
+    addNotificationToUser(uid, data);
+    toast(notificationBodyConstructor(data.title, data.body));
 };
 
 export default function Notifications() {
@@ -59,17 +60,7 @@ export default function Notifications() {
     // Prende le notifiche dalla cache
     function getNotificationsFromCache() {
         // Recupera le notifiche ricevute
-        let res = [ {
-                        type: "severe",
-                        text:"prova notifica 1"
-                    },
-                    {"type": "info", "text": "prova notifica 2"}, 
-                    {"type": "alert", "text": "prova notifica 3"},
-                    {"type": "info", "text": "prova notifica 4"},
-                    {"type": "severe", "text": "prova notifica 5"},
-                    {"type": "alert", "text": "prova notifica 6, Qusta notifica è molto lunga e serve per testare il comportamento della finestra di notifica quando il testo è troppo lungo e non entra in una sola riga, quindi dovrebbe andare a capo automaticamente senza problemi."},
-                    {"type": "info", "text": "prova notifica 7"},
-                ].map((notification, index) => (
+        let res =getUserNotifications().map((notification, index) => (
 
             <div key={index} className="notification-item">
                 <div className={`notification-indicator ${notification.type}`}/>

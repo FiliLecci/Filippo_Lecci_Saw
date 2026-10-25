@@ -2,9 +2,11 @@ import { db, auth, functions } from './config';
 import {
   collection, doc, getDoc,
   onSnapshot, query, orderBy, limit, setDoc,
-  deleteDoc, serverTimestamp
+  deleteDoc, serverTimestamp,
+  addDoc
 } from 'firebase/firestore';
 import { httpsCallable } from "firebase/functions";
+import { format } from 'date-fns';
 
 
 // In questo file definisco solo le funzione che hanno a che fare con firestone e che ci interagiscono direttamente.
@@ -210,4 +212,41 @@ export async function generateLimitReading(stationId, limitType){
     console.error("Errore generazione lettura oltre il limite: ", e.code, e.message);
     throw e;
   }
+}
+
+/* Aggiunge una notifica per l'utente
+ * notification = {
+ *  title: "Titolo della notifica"
+ *  body: "Corpo della notifica"
+ *  time: dd/MM/yyyy hh:mm:ss
+ * }
+ */
+export async function addNotificationToUser(uId, notification){
+  const notificationCollection = collection(db, 'users', uId, 'notifications');
+  let newDoc = null;
+
+  try {
+    await addDoc(notificationCollection, {
+      time: format(Date.now(), "dd/MM/yyyy HH:mm:ss"),
+      body: notification.body,
+      title: notification.title,
+      severity: notification.severity,
+      read: false,
+    }).then((document) => {
+      newDoc = document;
+    });
+  } catch (e) {
+    console.error("Errore inserimento notifica: ", e);
+  }
+
+  return newDoc;
+}
+
+// Ritorna un array di tutte le notifiche non lette dall'utente 
+export async function getUserNotifications(uId){
+  const qSnap = collection(db, 'users', uId, 'notifications')
+              .where("read", "==", false)
+              .orderBy('time').get();
+
+  return qSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

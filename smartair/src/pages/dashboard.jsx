@@ -82,7 +82,7 @@ export default function Dashboard() {
       
       {/* Card delle stazioni disponibili */}
       {stations.length === 0 ? (
-        <p style={{ color: '#888', margin: '16px 0' }}>Nessuna stazione trovata. Aggiungine una dalla pagina Dispositivi.</p>
+        <p>Nessuna stazione trovata. Aggiungine una dalla pagina Dispositivi.</p>
       ) : (
         <div className="dashboard-cards-container">
           <h2>Le tue stazioni</h2>
@@ -105,7 +105,14 @@ export default function Dashboard() {
                 key={s.id}
                 className="station-btn-card"
                 data-focused = {selectedStation ? selectedStation.id === s.id : false}
-                onClick={() => setSelectedStation(s)}
+                onClick={() => {
+                  setSelectedStation(s)
+                  sendNotification(uid, {
+                    title:"Stazione selezionata",
+                    body:`Selezionata stazione: ${s.id}`,
+                    severity:"info",
+                  });
+                }}
               >
                 {/* Header Card: Nome a sinistra, Cerchio Stato a destra */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
