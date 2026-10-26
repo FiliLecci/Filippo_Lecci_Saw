@@ -1,14 +1,16 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { LuBell } from "react-icons/lu";
 import { IoIosArrowUp } from "react-icons/io";
 import { toast } from 'react-toastify'; 
-import { addNotificationToUser } from '../firebase/firestore';
+import { addNotificationToUser, getUserNotifications } from '../firebase/firestore';
+import { auth } from '../firebase/config.js';
 
 import '../styles/Notifications.css';
 
 // Non si possono usre gli state fuori dai blocchi quindi devo fare a questa maniera
 var newNotifications = false;
 const listeners = new Set();
+const user = auth.currentUser;
 
 function setNewNotifications(value) {
   newNotifications = value;
@@ -35,19 +37,32 @@ function notificationBodyConstructor (title, body) {
     );
 };
 
-export function sendNotification (uid, data) {
+/* Invia una notifica all'utente e la aggiunge su firestore alle altre
+ * 
+ */
+export function sendNotification (data) {
+    if (!user.uid) return;
+
     setNewNotifications(true);
-    addNotificationToUser(uid, data);
+    addNotificationToUser(user.uid, data);
     toast(notificationBodyConstructor(data.title, data.body));
 };
 
 export default function Notifications() {
     const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
     const [notificationWindowViewed, setNotificationWindowViewed] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+
+    useEffect(() => {
+        if (!notificationWindowViewed || !user?.uid) return;
+
+        const unsub = getUserNotifications(user.uid, setNotifications);
+        return unsub;
+    }, [notificationWindowViewed, user?.id]);
     
     const handleNotificationBtnClick = () => {
         setNewNotifications(false);
-        setNotificationWindowViewed(!notificationWindowViewed);
+        setNotificationWindowViewed(true);
 
         // mostra la richiesta solo se il permesso è default (non ancora concesso o negato)
         if((notificationPermission === 'default' || Notification.permission === 'default') && notificationWindowViewed === false) {
@@ -57,26 +72,8 @@ export default function Notifications() {
         }
     }
 
-    // Prende le notifiche dalla cache
-    function getNotificationsFromCache() {
-        // Recupera le notifiche ricevute
-        let res =getUserNotifications().map((notification, index) => (
-
-            <div key={index} className="notification-item">
-                <div className={`notification-indicator ${notification.type}`}/>
-                <p>{notification.text}</p>
-            </div>
-        ));
-
-        if(res.length === 0) {
-            return (
-                <div className="notification-item">
-                    Nessuna notifica ricevuta nella sessione attuale
-                </div>
-            )
-        }
-
-        return res;
+    const handleNotificationCloseBtnClick = () => {
+        setNotificationWindowViewed(false);
     }
 
     function notificationWindowManager() {
@@ -85,8 +82,8 @@ export default function Notifications() {
                 // Visualizzazione quando la finestra è chiusa
                 <button 
                     className="notification-btn"
-                    notification-permission={notificationPermission}
-                    onClick={handleNotificationBtnClick}
+                    notification-permission={ notificationPermission }
+                    onClick={ handleNotificationBtnClick }
                     >
                     <div
                         className="new-notification-indicator"
@@ -102,11 +99,17 @@ export default function Notifications() {
                 <div className="notification-window">
                     <button 
                         className="notification-btn"
-                        onClick={handleNotificationBtnClick}
+                        onClick={ handleNotificationCloseBtnClick }
                         >
                         <IoIosArrowUp size={25}/>
                     </button>
-                    { getNotificationsFromCache() }
+                    {(notifications ?? []).length === 0 && <p>Nessuna notifica</p>}
+                    {(notifications ?? []).map((n) => (
+                        <div key={n.id} className="notification-item">
+                            <div className={`notification-indicator ${n.severity}`} />
+                            <p>{n.body}</p>
+                        </div>
+                    ))}
                 </div>
             );
         }
@@ -115,7 +118,7 @@ export default function Notifications() {
     return (
         <div className="notification-container" 
             data-notification-window-viewed={notificationWindowViewed}>
-                {notificationWindowManager()}
+                { notificationWindowManager() }
         </div>
     );
 };

@@ -138,8 +138,11 @@ export default function Devices() {
               </p>
               
               <div className="station-btn-group">
-                {/* Renderizza pulsante modifica solo se è editor */}
-                {station.role == "editor" && 
+                {/* Renderizza pulsante modifica solo se è editor o proprietario*/}
+                {/* TODO qua il ruolo non è più dentro la stazione ma si trova come campo "role" nel documento 
+                db/users/uid/stations/stationId  
+                Quindi bisogna prendere prima quel documento e poi accedere al campo per controllare il ruolo*/}
+                {station.role === "editor" && station.role === "owner" &&
                 <button
                   style={{
                     flex: 1,

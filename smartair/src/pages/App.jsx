@@ -25,6 +25,7 @@ function LayoutWrapper() {
       }}>
         <Outlet />
       </main>
+      
       {/* Icona notifiche */}
       <Notifications />
     </div>

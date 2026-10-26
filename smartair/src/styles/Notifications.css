@@ -46,6 +46,12 @@
   align-items: flex-start;
   background: #fff;
 }
+
+.notification-window p {
+  color: grey;
+  font-size: 15pt;
+}
+
 .new-notification-indicator {
   position: absolute;
   top: 7px;
@@ -109,4 +115,9 @@
 .notification-indicator.alert{
   background-color:#ceab0e;
   box-shadow: 0 0 4px #ceab0e;
+}
+
+.notiafication-indicator.debug{
+  background-color: #a531c9;
+  box-shadow: 0 0 4px #a531c9;
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {generateTestReadings, generateLimitReading} from '../firebase/firestore';
+import { sendNotification } from '../components/notifications';
 
 import '../index.css';
 import '../styles/style.css';
@@ -14,7 +15,12 @@ export default function DevicesTesting() {
             console.log("Inserire Id della stazione");
             return;
         }
-        await generateTestReadings(inputStationId);
+        await generateTestReadings(inputStationId).then(sendNotification(
+            {
+                title: "Debug",
+                body: "Generazione delle letture di test completata.",
+                severity: "debug"
+            }));
     };
 
     const handleAddLimitReading = async () => {

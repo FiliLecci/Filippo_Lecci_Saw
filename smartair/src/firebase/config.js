@@ -2,7 +2,6 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { getAuth, connectAuthEmulator, GoogleAuthProvider } from 'firebase/auth';
-import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
     apiKey            : import.meta.env.VITE_FIREBASE_API_KEY,

@@ -98,8 +98,7 @@ export const createNewStation = onCall(async (request) => {
       owner: uid,
       visibility: 'private',
       device_token: crypto.randomUUID(),
-      createdAt: new Date(),
-      role: "editor"
+      createdAt: new Date()
     });
     
     await db.collection(`stations/${stationRef.id}/readings`).add({

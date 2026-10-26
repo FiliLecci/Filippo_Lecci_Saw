@@ -3,8 +3,7 @@ import {
   collection, doc, getDoc,
   onSnapshot, query, orderBy, limit, setDoc,
   deleteDoc, serverTimestamp,
-  addDoc
-} from 'firebase/firestore';
+  addDoc, where} from 'firebase/firestore';
 import { httpsCallable } from "firebase/functions";
 import { format } from 'date-fns';
 
@@ -215,10 +214,11 @@ export async function generateLimitReading(stationId, limitType){
 }
 
 /* Aggiunge una notifica per l'utente
- * notification = {
+ * data deve essere un oggetto composto come:
+ * {
  *  title: "Titolo della notifica"
  *  body: "Corpo della notifica"
- *  time: dd/MM/yyyy hh:mm:ss
+ *  severity: severità della notifica
  * }
  */
 export async function addNotificationToUser(uId, notification){
@@ -243,10 +243,14 @@ export async function addNotificationToUser(uId, notification){
 }
 
 // Ritorna un array di tutte le notifiche non lette dall'utente 
-export async function getUserNotifications(uId){
-  const qSnap = collection(db, 'users', uId, 'notifications')
-              .where("read", "==", false)
-              .orderBy('time').get();
+export function getUserNotifications(uid, callback){
+  const q = query(
+    collection(db, "users", uid, "notifications"),
+    where("read", "==", false),
+    orderBy("time", "desc")
+  );
 
-  return qSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
 }

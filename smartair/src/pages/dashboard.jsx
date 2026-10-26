@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getUserStations, listenToReadings } from '../firebase/firestore';
 import { LineChart, AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -55,7 +54,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!stations || stations.length === 0) return;
 
-    // TODO controlliamo prima se nella cache ci sono dati per la stazione selezionata e usiamo quelli
+    // TODO controllo prima se nella cache ci sono dati per la stazione selezionata e usiamo quelli
 
     const unsubscribers = [];
 
@@ -107,11 +106,6 @@ export default function Dashboard() {
                 data-focused = {selectedStation ? selectedStation.id === s.id : false}
                 onClick={() => {
                   setSelectedStation(s)
-                  sendNotification(uid, {
-                    title:"Stazione selezionata",
-                    body:`Selezionata stazione: ${s.id}`,
-                    severity:"info",
-                  });
                 }}
               >
                 {/* Header Card: Nome a sinistra, Cerchio Stato a destra */}

@@ -1,10 +1,9 @@
 import React from 'react';
 import { useState } from 'react';
-import { auth, db } from '../firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
+import { auth } from '../firebase/config';
 import { modifyStationNickname, getUserInfo } from '../firebase/firestore';
-import { LuClipboardPaste, LuEye } from 'react-icons/lu'
-import { GoPerson } from "react-icons/go";
+import { LuClipboardPaste } from 'react-icons/lu'
+import { roleGenerator } from '../pages/utils'
 
 
 import '../styles/Modal.css';
@@ -22,10 +21,6 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
   if(!station || !mode) {
       return null;
   }
-
-  const toggleModal = () => {
-      setIsOpen(!isOpen);
-  };
 
   const handleSave = async () => {
     if (!editedNickname.trim()) {
@@ -92,7 +87,7 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
         <div className="field-group">
           <label className="field-label-small">Ruolo</label>
           <p className="field-value-secondary">
-            {station.role === 'owner' ? <GoPerson /> + 'Proprietario' : <LuEye /> + ' Osservatore'}
+            {roleGenerator(station.role)}
           </p>
         </div>
       </>

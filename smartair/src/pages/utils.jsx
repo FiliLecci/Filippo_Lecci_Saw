@@ -1,3 +1,6 @@
+import { LuEye } from 'react-icons/lu'
+import { GoPerson } from "react-icons/go";
+
 // Calcolo dell'indice di qualità dell'aria (AQI) in base alla concentrazione di CO2 in ppm
 export function calcAqi(ppm) {
   if (ppm === undefined || ppm === null) return { label: 'N/D', color: '#aaa' };
@@ -7,3 +10,14 @@ export function calcAqi(ppm) {
   if (ppm < 1500) return { label: 'Scarsa',   color: '#f44336' };
   return             { label: 'Pessima',  color: '#9c27b0' };
 };
+
+export function roleGenerator(role) {
+  switch (role) {
+    case "owner":
+      return (<><GoPerson /> Proprietario</>);
+    case "editor":
+      return (<><LuEye /> Visualizzatore</>);
+    default:
+      break;
+  }
+}
