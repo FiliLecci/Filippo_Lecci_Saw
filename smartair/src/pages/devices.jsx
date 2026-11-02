@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { auth } from '../firebase/config';
 import { 
   getUserStations, createStation, 
-  deleteStationForUser, deleteStationPermanent, 
-  addStationToUser, getUserStationRole
+  deleteStationForUser, deleteStationPermanent,
+  addStationToUser
 } from '../firebase/firestore';
 import {LuTrash, LuEye, LuPen, LuPlus} from 'react-icons/lu';
 import { ViewDeviceModal } from '../components/viewDeviceModal';
@@ -56,7 +56,7 @@ export default function Devices() {
       }
       else{
         console.log("Eliminazione della stazione per l'utente.");
-        await deleteStationForUser(uid, selectedStation.id);
+        await deleteStationForUser(selectedStation.id);
       }
     } catch (error) {
       console.error('Errore durante l\'eliminazione della stazione:', error);
@@ -85,7 +85,7 @@ export default function Devices() {
             onClick={handleAdd}
             disabled={loading}
           >
-            {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
+            <LuPlus size="25" style={{display: 'block'}} />
           </button>
         </div>
         <hr className="vertBar"/>
@@ -102,7 +102,7 @@ export default function Devices() {
             onClick={handleExistingStationAdd}
             disabled={loading}
           >
-            {loading ? '...' : <LuPlus size="25" style={{display: 'block'}} />}
+            <LuPlus size="25" style={{display: 'block'}} />
           </button> 
         </div>
       </div>
@@ -139,10 +139,7 @@ export default function Devices() {
               
               <div className="station-btn-group">
                 {/* Renderizza pulsante modifica solo se è editor o proprietario*/}
-                {/* TODO qua il ruolo non è più dentro la stazione ma si trova come campo "role" nel documento 
-                db/users/uid/stations/stationId  
-                Quindi bisogna prendere prima quel documento e poi accedere al campo per controllare il ruolo*/}
-                {station.role === "editor" && station.role === "owner" &&
+                {(station.role === 'owner' || station.role === 'editor') &&
                 <button
                   style={{
                     flex: 1,

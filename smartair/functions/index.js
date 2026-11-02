@@ -1,6 +1,7 @@
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import admin from "firebase-admin";
 import crypto from "crypto";
 
@@ -98,7 +99,10 @@ export const createNewStation = onCall(async (request) => {
       owner: uid,
       visibility: 'private',
       device_token: crypto.randomUUID(),
-      createdAt: new Date()
+      createdAt: new Date(),
+      temp_limit: 30,   // limite a 30°C
+      hum_limit: 80,    // limite a 80% umidità
+      ppm_limit: 1000,  // limite qualità moderata
     });
     
     await db.collection(`stations/${stationRef.id}/readings`).add({
@@ -159,25 +163,6 @@ export const addUserStation = onCall(async (request) => {
   }
 });
 
-// Ritorna il ruolo dell'utente per la stazione
-export const getUserStationRole = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
-  }
-
-  const { uid, stationId } = request.data;
-  const db = getFirestore();
-
-  const userStationRef = db.doc(`users/${uid}/stations/${stationId}`);
-  const userStationSnap = await userStationRef.get();
-
-  if (!userStationSnap.exists) {
-    throw new HttpsError("not-found", "La stazione non è assegnata all'utente");
-  }
-
-  return { role: userStationSnap.data().role };
-});
-
 // Aggiunge una lettura da dispositivo tramite HTTP
 export const addReading = onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -221,8 +206,7 @@ export const addReading = onRequest(async (req, res) => {
       air_ppm: parseFloat(air_ppm),
       air_raw: parseInt(air_raw),
       aqi: aqi,
-      timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(timestamp) * 1000)),
-      receivedAt: admin.firestore.FieldValue.serverTimestamp()
+      timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(timestamp) * 1000))
     });
 
     res.json({ ok: true, message: 'Lettura salvata con successo', aqi });
@@ -232,12 +216,12 @@ export const addReading = onRequest(async (req, res) => {
   }
 });
 
-// genera una lettura randomica appena creato
+// genera una lettura randomica
 const randomReading = (date) => ({
   temp: Math.round(Math.random() * 25),           // 0°C-25°C max onesti
   humidity: Math.round(Math.random() * 50 + 20),  // range da 20 a 70
   air_ppm: Math.round(Math.random() * 1000),      // 1000 è il limite fino a che l'aria è accettabile
-  timestamp: date,                    // data odierna - 10 minuti
+  timestamp: date,                                // data odierna
 });
 
 // generazione 50 letture di test con valori casuali e a distanza di 10 minuti una dall'altra a partire dalla data odierna
@@ -291,24 +275,24 @@ export const generateLimitReading = onCall(async (request) => {
     if (!stationSnap.exists) {
       throw new HttpsError("not-found", "Stazione non trovata.");
     }
-    const { tempLimit, humLimit, ppmLimit } = stationSnap.data();
+    const { temp_limit, hum_limit, ppm_limit } = stationSnap.data();
 
     const reading = randomReading(new Date());
 
     switch (type) {
       case "TEMP_LIMIT":
-        reading.temp = tempLimit + 5;
+        reading.temp = temp_limit + 5;
         break;
       case "HUM_LIMIT":
-        reading.humidity = humLimit + 5;
+        reading.humidity = hum_limit + 5;
         break;
       case "PPM_LIMIT":
-        reading.air_ppm = ppmLimit + 100;
+        reading.air_ppm = ppm_limit + 100;
         break;
       case "ALL":
-        reading.temp = tempLimit + 5;
-        reading.humidity = humLimit + 5;
-        reading.air_ppm = ppmLimit + 100;
+        reading.temp = temp_limit + 1;
+        reading.humidity = hum_limit + 1;
+        reading.air_ppm = ppm_limit + 1;
         break;
       default:
         throw new HttpsError("invalid-argument", "Il tipo di limite non è valido");
@@ -322,3 +306,53 @@ export const generateLimitReading = onCall(async (request) => {
     throw new HttpsError("internal", "Errore durante la scrittura su Firestore");
   }
 });
+
+// funzione che viene chiamata quando arriva una nuova lettura e nel caso crea una notifica
+export const controllaLettura = onDocumentCreated(
+  "stations/{stationId}/readings/{readingId}",
+  async (event) => {
+    const { stationId, readingId } = event.params;
+    const lettura = event.data?.data();
+    if (!lettura) return;
+
+    const db = getFirestore();
+
+    const station = (await db.doc(`stations/${stationId}`).get()).data();
+    if (!station) return;
+
+    // soglie superate
+    const superate = [];
+    if (lettura.temp > station.temp_limit) superate.push("Temperatura");
+    if (lettura.humidity > station.hum_limit) superate.push("Umidità");
+    if (lettura.air_ppm > station.ppm_limit) superate.push("Qualità aria");
+    if (!superate.length) return; // niente da notificare
+
+    // array di tutti gli utenti
+    const utenti = await db.collection("users").get();
+
+    // per ogni utente prendiamo il documento che dice se può vedere la stazione
+    const userStations = await Promise.all(
+      utenti.docs.map((u) => db.doc(`users/${u.id}/stations/${stationId}`).get())
+    );
+
+    const batch = db.batch();
+    let n = 0;
+
+    userStations.forEach((stationDoc, i) => {
+      if (!stationDoc.exists) return;
+
+      const uid = utenti.docs[i].id;
+      batch.set(db.doc(`users/${uid}/notifications/${readingId}`), {
+        title: "Soglia superata",
+        body: `La stazione ${stationDoc.data().nickname ?? stationId} ha superato: ${superate.join(", ")}`,
+        severity: "alert",
+        read: false,
+        time: Date.now(),
+      });
+      n++;
+    });
+
+    console.log(`Soglie superate: ${superate.join(", ")}; notifiche create: ${n}`);
+    if (n > 0) await batch.commit();
+  }
+);

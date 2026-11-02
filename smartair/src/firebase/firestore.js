@@ -1,4 +1,4 @@
-import { db, auth, functions } from './config';
+import { db, functions } from './config';
 import {
   collection, doc, getDoc,
   onSnapshot, query, orderBy, limit, setDoc,
@@ -7,11 +7,28 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { format } from 'date-fns';
 
-
-// In questo file definisco solo le funzione che hanno a che fare con firestone e che ci interagiscono direttamente.
+/*
+STRUTTURA FILE FIRESTORE
+db
+ |--users
+ |    |--'userId'
+ |          |--notifications
+ |          |     |--'notId1'
+ |          |     |--'notId2'
+ |          |     ...
+ |          |--stations
+ |                |--'stationId1'
+ |                |--'stationId2'
+ |                ...
+ |
+ |--stations
+ |  |--'stationId1'
+ |  |--'stationId2'
+ |  ...
+*/
 
 // Funzione di inizializzazione del database quando si registra un utente
-export async function initializeUserDatabase(uid) {
+export async function initializeUserDatabase(uid, email) {
   try {
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
@@ -21,7 +38,7 @@ export async function initializeUserDatabase(uid) {
       console.log('Inizializzo il database per nuovo utente:', uid);
       
       await setDoc(userRef, {
-        email: auth.currentUser.email,
+        email: email ?? null,
         createdAt: serverTimestamp(),
         theme: 'light'
       });
@@ -105,7 +122,8 @@ export async function addStationToUser(uid, stationId) {
 }
 
 // Elimina una stazione per un utente se questo non è il proprietario
-export async function deleteStationForUser(uid, stationId) {
+// Si può fare qua perché si elimina un solo file
+export async function deleteStationForUser(stationId) {
   try {
     // Eliminazione del documento
     await deleteDoc(doc(db, 'users', uid, 'stations', stationId));
@@ -118,6 +136,7 @@ export async function deleteStationForUser(uid, stationId) {
 }
 
 // Elimina una stazione in modo permanente se l'utente ne è proprietario
+// TODO Questa roba va fatta in una cloud function perché deve toccare dati che non appartengono all'utente e deve fare eliminazioni ricorsive anche delle letture
 export async function deleteStationPermanent(stationId) {
   console.log("Inizio eliminazione della stazione: " + stationId);
 
@@ -166,21 +185,6 @@ export function listenToReadings(stationId, callback, n = 20) {
   });
 }
 
-// Ritorna il ruolo dell'utente per la stazione
-export async function getUserStationRole(uid, stationId){
-  var role = undefined;
-
-  try{
-    const getUserStationRoleFunc = httpsCallable(functions, "getUserStationRole");
-    role = await getUserStationRoleFunc({uid: uid, stationId: stationId});
-  } catch (e){
-    role = "None";
-  }
-
-  console.log(role, " ", stationId);
-  return role;
-}
-
 // Genera letture casuali per la stazione specificata
 export async function generateTestReadings(stationId){
   try {
@@ -201,12 +205,10 @@ export async function generateTestReadings(stationId){
  * "PPM_LIMIT"      ppm oltre la soglia
  * "ALL"            tutti i valori oltre la soglia
  */
-export async function generateLimitReading(stationId, limitType){
+export async function generateLimitReading(station_Id, limitType){
   try {
-
     const generateLimitReadingFunction= httpsCallable(functions, "generateLimitReading");
-    await generateLimitReadingFunction({stationId: stationId, type: limitType});
-
+    await generateLimitReadingFunction({stationId: station_Id, type: limitType});
   } catch (e) {
     console.error("Errore generazione lettura oltre il limite: ", e.code, e.message);
     throw e;
@@ -227,10 +229,10 @@ export async function addNotificationToUser(uId, notification){
 
   try {
     await addDoc(notificationCollection, {
-      time: format(Date.now(), "dd/MM/yyyy HH:mm:ss"),
-      body: notification.body,
       title: notification.title,
+      body: notification.body,
       severity: notification.severity,
+      time: Date.now(), // se serve formattarlo si fa da UI sennò fa casino la orderBy
       read: false,
     }).then((document) => {
       newDoc = document;
@@ -242,7 +244,7 @@ export async function addNotificationToUser(uId, notification){
   return newDoc;
 }
 
-// Ritorna un array di tutte le notifiche non lette dall'utente 
+// Passa alla callback l'array di notifiche non lette dall'utente definito da uid
 export function getUserNotifications(uid, callback){
   const q = query(
     collection(db, "users", uid, "notifications"),

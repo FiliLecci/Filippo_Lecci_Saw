@@ -41,7 +41,7 @@ function App() {
       if (authUser) {
         // Utente loggato - inizializza il database se necessario
         try {
-          await initializeUserDatabase(authUser.uid);
+          await initializeUserDatabase(authUser.uid, authUser.email);
         } catch (e) {
           console.error('Errore durante l\'inizializzazione:', e);
         }

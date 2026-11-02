@@ -1,0 +1,41 @@
+.account_header {
+    padding: 32px;
+    max-width: 500px;
+}
+
+.account_section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+}
+
+.section_title {
+    margin-top: 0;
+}
+
+.account_section label {
+    display: block;
+    font-size: 10pt;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.account_section input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+
+.account_section button {
+    padding: 10px 20px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pinter;
+    font-size: 10pt;
+}

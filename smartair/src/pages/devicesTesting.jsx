@@ -24,7 +24,14 @@ export default function DevicesTesting() {
     };
 
     const handleAddLimitReading = async () => {
-        console.log("aggiunta letture per notifica fake: ", document.getElementById("notificationType").value);
+        let type = document.getElementById("notificationType").value;
+        await generateLimitReading(inputStationId, type).then(
+            sendNotification(
+            {
+                title: "Debug",
+                body: "Generazione di una lettura di test sui limiti completata.",
+                severity: "debug"
+            }));
     };
 
     return (

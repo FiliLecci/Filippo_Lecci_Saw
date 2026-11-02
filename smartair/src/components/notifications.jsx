@@ -37,9 +37,7 @@ function notificationBodyConstructor (title, body) {
     );
 };
 
-/* Invia una notifica all'utente e la aggiunge su firestore alle altre
- * 
- */
+// Invia una notifica all'utente e la aggiunge su firestore alle altre
 export function sendNotification (data) {
     if (!user.uid) return;
 
@@ -50,15 +48,14 @@ export function sendNotification (data) {
 
 export default function Notifications() {
     const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
-    const [notificationWindowViewed, setNotificationWindowViewed] = useState(null);
+    const [notificationWindowViewed, setNotificationWindowViewed] = useState(false);
     const [notifications, setNotifications] = useState([]);
 
     useEffect(() => {
-        if (!notificationWindowViewed || !user?.uid) return;
+        if (!user?.uid) return;
 
-        const unsub = getUserNotifications(user.uid, setNotifications);
-        return unsub;
-    }, [notificationWindowViewed, user?.id]);
+        return getUserNotifications(user.uid, setNotifications);
+    }, [user?.uid]);
     
     const handleNotificationBtnClick = () => {
         setNewNotifications(false);

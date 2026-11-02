@@ -79,7 +79,6 @@ export function ViewDeviceModal({ isViewed, station, mode, onClose }) {
         <div className="field-group">
           <label className="field-label-small">Proprietario</label>
           <p className="field-value-secondary">
-            {console.log(getUserInfo(auth.currentUser.uid))}
             {station.owner === auth.currentUser.uid ? 'Tu' : station.owner}
           </p>
         </div>
