@@ -5,7 +5,6 @@ import {
   deleteDoc, serverTimestamp,
   addDoc, where} from 'firebase/firestore';
 import { httpsCallable } from "firebase/functions";
-import { format } from 'date-fns';
 
 /*
 STRUTTURA FILE FIRESTORE

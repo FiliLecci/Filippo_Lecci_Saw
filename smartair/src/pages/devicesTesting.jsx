@@ -15,23 +15,12 @@ export default function DevicesTesting() {
             console.log("Inserire Id della stazione");
             return;
         }
-        await generateTestReadings(inputStationId).then(sendNotification(
-            {
-                title: "Debug",
-                body: "Generazione delle letture di test completata.",
-                severity: "debug"
-            }));
+        await generateTestReadings(inputStationId);
     };
 
     const handleAddLimitReading = async () => {
         let type = document.getElementById("notificationType").value;
-        await generateLimitReading(inputStationId, type).then(
-            sendNotification(
-            {
-                title: "Debug",
-                body: "Generazione di una lettura di test sui limiti completata.",
-                severity: "debug"
-            }));
+        await generateLimitReading(inputStationId, type);
     };
 
     return (
