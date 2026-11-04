@@ -92,6 +92,16 @@ export async function modifyStationNickname(uid, stationId, newNickname) {
   }
 }
 
+export async function modifyStationLimits(stationId, newLimits) {
+  console.log("Modifica limiti stazione: ", stationId, newLimits);
+  try {
+    await setDoc(doc(db, 'stations', stationId), newLimits, { merge: true });
+  } catch (e) {
+    console.error('Errore modifyStationLimits:', e.code, e.message);
+    throw e;
+  }
+}
+
 // Crea una nuova stazione e la associa all'utente
 export async function createStation(uid, name) {
   try {

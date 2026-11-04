@@ -5,6 +5,7 @@
   backdrop-filter: blur(5px);
   z-index: 9999;
 }
+
 .modal-container {
   position: fixed;
   top: 50%;
@@ -21,6 +22,7 @@
   box-shadow: 0 24px 70px rgba(12, 29, 48, .25);
   z-index: 10000;
 }
+
 .modal-content {
   display: flex;
   flex: 1;
@@ -31,6 +33,7 @@
   padding: 24px;
   overflow: auto;
 }
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -39,8 +42,21 @@
   padding: 22px 24px;
   border-bottom: 1px solid #e7edf5;
 }
-.modal-body { flex: 1; padding: 24px; overflow-y: auto; }
-.modal-header h2 { margin: 0; color: #172638; font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
+
+.modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #172638;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
 .modal-close-btn {
   display: flex;
   align-items: center;
@@ -55,7 +71,12 @@
   font-size: 24px;
   cursor: pointer;
 }
-.modal-close-btn:hover { background: #f0f5fb; color: #172638; }
+
+.modal-close-btn:hover {
+  background: #f0f5fb;
+  color: #172638;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -63,13 +84,58 @@
   padding: 18px 24px;
   border-top: 1px solid #e7edf5;
 }
-.field-group { display: flex; flex-direction: column; gap: 4px; }
-.field-label { margin-bottom: 4px; color: #52657c; font-size: 13px; font-weight: 600; }
-.field-label-small { margin-bottom: 4px; color: #8797aa; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
-.field-value { margin: 0; color: #172638; font-size: 15px; font-weight: 600; }
-.field-value-mono { color: #52657c; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
-.field-value-secondary { color: #718198; font-size: 13px; }
-.field-hint { margin: 5px 0 0; color: #8797aa; font-size: 12px; }
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-group-inline {
+  display: flex;
+  flex-direction: row;
+  gap: 25px;
+}
+
+.field-label {
+  margin-bottom: 4px;
+  color: #52657c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field-label-small {
+  margin-bottom: 4px;
+  color: #8797aa;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.field-value {
+  margin: 0;
+  color: #172638;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.field-value-mono {
+  color: #52657c;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.field-value-secondary {
+  color: #718198;
+  font-size: 13px;
+}
+
+.field-hint {
+  margin: 5px 0 0;
+  color: #8797aa;
+  font-size: 12px;
+}
+
 .input-field {
   width: 100%;
   min-height: 40px;
@@ -82,12 +148,37 @@
   font-family: inherit;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
-.input-field:focus { outline: none; border-color: #2583f5; box-shadow: 0 0 0 3px rgba(37,131,245,.12); }
-.input-field:disabled { background: #f4f7fb; color: #8797aa; cursor: not-allowed; }
-.field-with-button { display: flex; align-items: center; gap: 8px; }
-.field-with-button p { margin: 0; }
-.field-with-button input { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-.field-with-button button, .copy-btn {
+
+.input-field:focus {
+  outline: none;
+  border-color: #2583f5;
+  box-shadow: 0 0 0 3px rgba(37, 131, 245, .12);
+}
+
+.input-field:disabled {
+  background: #f4f7fb;
+  color: #8797aa;
+  cursor: not-allowed;
+}
+
+.field-with-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-with-button p {
+  margin: 0;
+}
+
+.field-with-button input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.field-with-button button,
+.copy-btn {
   min-height: 40px;
   padding: 9px 13px;
   border: 1px solid #dfe8f2;
@@ -98,7 +189,14 @@
   font-size: 12px;
   white-space: nowrap;
 }
-.field-with-button button:hover, .copy-btn:hover { background: #e8f2ff; border-color: #bfd9fa; color: #176bd0; }
+
+.field-with-button button:hover,
+.copy-btn:hover {
+  background: #e8f2ff;
+  border-color: #bfd9fa;
+  color: #176bd0;
+}
+
 .token-box {
   flex: 1;
   padding: 12px;
@@ -110,7 +208,10 @@
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   overflow-wrap: anywhere;
 }
-.btn-cancel, .btn-save, .btn-save-danger {
+
+.btn-cancel,
+.btn-save,
+.btn-save-danger {
   min-height: 40px;
   padding: 10px 17px;
   border-radius: 9px;
@@ -118,16 +219,62 @@
   font-size: 13px;
   font-weight: 600;
 }
-.btn-cancel { background: #fff; color: #52657c; border: 1px solid #dfe8f2; }
-.btn-cancel:hover { background: #f6f9fd; }
-.btn-save { background: #2583f5; color: white; border: 1px solid #2583f5; }
-.btn-save:hover:not(:disabled) { background: #176bd0; }
-.btn-save-danger { background: #e64d5b; color: white; border: 1px solid #e64d5b; }
-.btn-save-danger:hover:not(:disabled) { background: #cb3746; }
-.btn-save:disabled, .btn-save-danger:disabled { opacity: .65; cursor: not-allowed; }
+
+.btn-cancel {
+  background: #fff;
+  color: #52657c;
+  border: 1px solid #dfe8f2;
+}
+
+.btn-cancel:hover {
+  background: #f6f9fd;
+}
+
+.btn-save {
+  background: #2583f5;
+  color: white;
+  border: 1px solid #2583f5;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #176bd0;
+}
+
+.btn-save-danger {
+  background: #e64d5b;
+  color: white;
+  border: 1px solid #e64d5b;
+}
+
+.btn-save-danger:hover:not(:disabled) {
+  background: #cb3746;
+}
+
+.btn-save:disabled,
+.btn-save-danger:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
 @media (max-width: 520px) {
-  .modal-container { width: calc(100% - 24px); max-height: 94vh; }
-  .modal-header, .modal-body, .modal-content { padding: 18px; }
-  .modal-footer { padding: 16px 18px; flex-wrap: wrap; }
-  .field-with-button { align-items: stretch; flex-direction: column; }
+  .modal-container {
+    width: calc(100% - 24px);
+    max-height: 94vh;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-content {
+    padding: 18px;
+  }
+
+  .modal-footer {
+    padding: 16px 18px;
+    flex-wrap: wrap;
+  }
+
+  .field-with-button {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }

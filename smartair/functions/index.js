@@ -164,7 +164,9 @@ export const addUserStation = onCall(async (request) => {
 });
 
 // Aggiunge una lettura da dispositivo tramite HTTP
-export const addReading = onRequest(async (req, res) => {
+export const addReading = onRequest(
+  {cors: true},
+  async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, X-Device-Token');
@@ -225,7 +227,7 @@ const randomReading = (date) => ({
 });
 
 // generazione 50 letture di test con valori casuali e a distanza di 10 minuti una dall'altra a partire dalla data odierna
-export const generateTestReadings = onCall(async (request) => {
+export const generateTestReadings = onCall({cors: true}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
   }
@@ -257,7 +259,7 @@ export const generateTestReadings = onCall(async (request) => {
 });
 
 // Crea singola lettura oltre il limite
-export const generateLimitReading = onCall(async (request) => {
+export const generateLimitReading = onCall({cors: true}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
   }
