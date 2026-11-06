@@ -2,12 +2,17 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { defineSecret, defineString } from 'firebase-functions/params';
+import webpush from 'web-push';
 import admin from "firebase-admin";
 import crypto from "crypto";
 
 admin.initializeApp();
 
 setGlobalOptions({ maxInstances: 10 });
+
+const VAPID_PUBLIC_KEY = defineString('VAPID_PUBLIC_KEY');
+const VAPID_PRIVATE_KEY = defineSecret('VAPID_PRIVATE_KEY');
 
 // Elimina una stazione e tutte le sue misurazioni
 export const recursiveDeleteCollection = onCall(async (request) => {
@@ -27,10 +32,10 @@ export const recursiveDeleteCollection = onCall(async (request) => {
 
     const ref = isDocument ? db.doc(path) : db.collection(path);
     await db.recursiveDelete(ref);
-    
-    return { 
-      success: true, 
-      message: `Eliminazione ricorsiva completata per ${isDocument ? 'documento' : 'collezione'}: '${path}'` 
+
+    return {
+      success: true,
+      message: `Eliminazione ricorsiva completata per ${isDocument ? 'documento' : 'collezione'}: '${path}'`
     };
   } catch (error) {
     console.error("Errore cancellazione ricorsiva:", error);
@@ -52,7 +57,7 @@ export const deleteAllStationRefs = onCall(async (request) => {
   try {
     const db = getFirestore();
     const usersSnap = await db.collection('users').get();
-    
+
     const batches = [];
     let currentBatch = db.batch();
     let count = 0;
@@ -73,11 +78,11 @@ export const deleteAllStationRefs = onCall(async (request) => {
       batches.push(currentBatch.commit());
     }
     else {
-      return {success: false, message: 'Nessun riferimento trovato per la stazione', count: count}
+      return { success: false, message: 'Nessun riferimento trovato per la stazione', count: count }
     }
 
     await Promise.all(batches);
-    return { success: true, message: 'Eliminati riferimenti alla stazione', count:count };
+    return { success: true, message: 'Eliminati riferimenti alla stazione', count: count };
   } catch (error) {
     console.error('Errore deleteStation:', error);
     throw new HttpsError('internal', error.message);
@@ -104,14 +109,14 @@ export const createNewStation = onCall(async (request) => {
       hum_limit: 80,    // limite a 80% umidità
       ppm_limit: 1000,  // limite qualità moderata
     });
-    
+
     await db.collection(`stations/${stationRef.id}/readings`).add({
       temp: 0,
       humidity: 0,
       air_ppm: 0,
       timestamp: new Date()
     });
-    
+
     await db.doc(`users/${uid}/stations/${stationRef.id}`).set({
       role: 'owner',
       nickname: name
@@ -132,18 +137,18 @@ export const addUserStation = onCall(async (request) => {
 
   const { uid, stationId } = request.data;
   const db = getFirestore();
-  
+
   try {
     const stationRef = db.collection('stations').doc(stationId);
     const stationSnap = await stationRef.get();
-    
+
     if (!stationSnap.exists) {
       throw new HttpsError("not-found", "Stazione non trovata");
     }
 
     const userStationRef = db.collection('users').doc(uid).collection('stations').doc(stationId);
     const userStationSnap = await userStationRef.get();
-    
+
     if (userStationSnap.exists) {
       throw new HttpsError("already-exists", "La stazione è già assegnata all'utente");
     }
@@ -165,58 +170,58 @@ export const addUserStation = onCall(async (request) => {
 
 // Aggiunge una lettura da dispositivo tramite HTTP
 export const addReading = onRequest(
-  {cors: true},
+  { cors: true },
   async (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, X-Device-Token');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, X-Device-Token');
 
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
-    return;
-  }
-
-  try {
-    const deviceToken = req.get('X-Device-Token');
-    const { station_id, temp, humidity, air_ppm, air_raw, timestamp } = req.body;
-    const db = getFirestore();
-
-    if (!deviceToken || !station_id || temp === undefined || humidity === undefined || air_ppm === undefined) {
-      return res.status(400).json({ error: 'Campi richiesti mancanti' });
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
     }
 
-    const stationRef = db.collection('stations').doc(station_id);
-    const stationSnap = await stationRef.get();
+    try {
+      const deviceToken = req.get('X-Device-Token');
+      const { station_id, temp, humidity, air_ppm, air_raw, timestamp } = req.body;
+      const db = getFirestore();
 
-    if (!stationSnap.exists) {
-      return res.status(404).json({ error: 'Stazione non trovata' });
+      if (!deviceToken || !station_id || temp === undefined || humidity === undefined || air_ppm === undefined) {
+        return res.status(400).json({ error: 'Campi richiesti mancanti' });
+      }
+
+      const stationRef = db.collection('stations').doc(station_id);
+      const stationSnap = await stationRef.get();
+
+      if (!stationSnap.exists) {
+        return res.status(404).json({ error: 'Stazione non trovata' });
+      }
+
+      if (stationSnap.data().device_token !== deviceToken) {
+        return res.status(403).json({ error: 'Token non valido' });
+      }
+
+      let aqi = 'good';
+      if (air_ppm >= 600 && air_ppm < 800) aqi = 'good';
+      else if (air_ppm >= 800 && air_ppm < 1000) aqi = 'moderate';
+      else if (air_ppm >= 1000 && air_ppm < 1500) aqi = 'poor';
+      else if (air_ppm >= 1500) aqi = 'hazardous';
+
+      await stationRef.collection('readings').add({
+        temp: parseInt(temp),
+        humidity: parseInt(humidity),
+        air_ppm: parseFloat(air_ppm),
+        air_raw: parseInt(air_raw),
+        aqi: aqi,
+        timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(timestamp) * 1000))
+      });
+
+      res.json({ ok: true, message: 'Lettura salvata con successo', aqi });
+    } catch (error) {
+      console.error('Errore addReading:', error);
+      res.status(500).json({ error: error.message });
     }
-
-    if (stationSnap.data().device_token !== deviceToken) {
-      return res.status(403).json({ error: 'Token non valido' });
-    }
-
-    let aqi = 'good';
-    if (air_ppm >= 600 && air_ppm < 800) aqi = 'good';
-    else if (air_ppm >= 800 && air_ppm < 1000) aqi = 'moderate';
-    else if (air_ppm >= 1000 && air_ppm < 1500) aqi = 'poor';
-    else if (air_ppm >= 1500) aqi = 'hazardous';
-
-    await stationRef.collection('readings').add({
-      temp: parseInt(temp),
-      humidity: parseInt(humidity),
-      air_ppm: parseFloat(air_ppm),
-      air_raw: parseInt(air_raw),
-      aqi: aqi,
-      timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(timestamp) * 1000))
-    });
-
-    res.json({ ok: true, message: 'Lettura salvata con successo', aqi });
-  } catch (error) {
-    console.error('Errore addReading:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+  });
 
 // genera una lettura randomica
 const randomReading = (date) => ({
@@ -227,7 +232,7 @@ const randomReading = (date) => ({
 });
 
 // generazione 50 letture di test con valori casuali e a distanza di 10 minuti una dall'altra a partire dalla data odierna
-export const generateTestReadings = onCall({cors: true}, async (request) => {
+export const generateTestReadings = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
   }
@@ -259,7 +264,7 @@ export const generateTestReadings = onCall({cors: true}, async (request) => {
 });
 
 // Crea singola lettura oltre il limite
-export const generateLimitReading = onCall({cors: true}, async (request) => {
+export const generateLimitReading = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "L'utente deve essere autenticato.");
   }
@@ -311,8 +316,18 @@ export const generateLimitReading = onCall({cors: true}, async (request) => {
 
 // funzione che viene chiamata quando arriva una nuova lettura e nel caso crea una notifica
 export const controllaLettura = onDocumentCreated(
-  "stations/{stationId}/readings/{readingId}",
+  {
+    document: "stations/{stationId}/readings/{readingId}",
+    secrets: [VAPID_PRIVATE_KEY],
+  },
   async (event) => {
+    // Configura le chiavi VAPID per le notifiche push
+    webpush.setVapidDetails(
+      'mailto:filippo.lecci@gmail.com',
+      VAPID_PUBLIC_KEY.value(),
+      VAPID_PRIVATE_KEY.value()
+    );
+
     const { stationId, readingId } = event.params;
     const lettura = event.data?.data();
     if (!lettura) return;
@@ -338,23 +353,95 @@ export const controllaLettura = onDocumentCreated(
     );
 
     const batch = db.batch();
-    let n = 0;
+    const destinatari = [];
 
     userStations.forEach((stationDoc, i) => {
       if (!stationDoc.exists) return;
 
       const uid = utenti.docs[i].id;
+      const nickname = stationDoc.data().nickname ?? stationId;
+      const title = "Soglia superata";
+      const body = `La stazione ${nickname} ha superato: ${superate.join(", ")}`;
+
       batch.set(db.doc(`users/${uid}/notifications/${readingId}`), {
-        title: "Soglia superata",
-        body: `La stazione ${stationDoc.data().nickname ?? stationId} ha superato: ${superate.join(", ")}`,
+        title,
+        body,
         severity: "alert",
         read: false,
         time: Date.now(),
       });
-      n++;
+
+      destinatari.push({ uid, title, body });
     });
 
-    console.log(`Soglie superate: ${superate.join(", ")}; notifiche create: ${n}`);
-    if (n > 0) await batch.commit();
+    if (destinatari.length === 0) return;
+
+    // Prima salva le notifiche nell'app.
+    await batch.commit();
+
+    // Poi invia la push a tutti i dispositivi registrati per ciascun utente.
+    const invii = destinatari.map(async ({ uid, title, body }) => {
+      const subscriptionsSnap = await db
+        .collection(`users/${uid}/pushSubscriptions`)
+        .get();
+
+      const payload = JSON.stringify({
+        title,
+        body,
+        url: "/",
+      });
+
+      return Promise.all(
+        subscriptionsSnap.docs.map(async (subscriptionDoc) => {
+          try {
+            await webpush.sendNotification(subscriptionDoc.data(), payload);
+          } catch (error) {
+            console.error(`Errore invio push per utente ${uid}:`, error);
+
+            // Rimuovi le subscription che il servizio push segnala come scadute.
+            if (error.statusCode === 404 || error.statusCode === 410) {
+              await subscriptionDoc.ref.delete();
+            }
+          }
+        })
+      );
+    });
+
+    await Promise.all(invii);
+
+    console.log(
+      `Soglie superate: ${superate.join(", ")}; notifiche create: ${destinatari.length}`
+    );
   }
 );
+
+// Salva la subscription alle notifiche push di un utente
+export const savePushSubscription = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Devi aver effettuato l’accesso.');
+  }
+
+  const subscription = request.data?.subscription;
+  if (
+    !subscription?.endpoint ||
+    !subscription?.keys?.p256dh ||
+    !subscription?.keys?.auth
+  ) {
+    throw new HttpsError('invalid-argument', 'Subscription non valida.');
+  }
+
+  const uid = request.auth.uid;
+  const subscriptionId = crypto
+    .createHash('sha256')
+    .update(subscription.endpoint)
+    .digest('hex');
+
+  await getFirestore()
+    .doc(`users/${uid}/pushSubscriptions/${subscriptionId}`)
+    .set({
+      ...subscription,
+      updatedAt: new Date(),
+    });
+
+  return { success: true };
+});

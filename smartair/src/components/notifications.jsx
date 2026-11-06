@@ -2,7 +2,7 @@ import { useState, useEffect, useSyncExternalStore, useRef } from 'react';
 import { LuBell } from "react-icons/lu";
 import { IoIosArrowUp } from "react-icons/io";
 import { toast } from 'react-toastify';
-import { addNotificationToUser, getUserNotifications } from '../firebase/firestore';
+import { addNotificationToUser, getUserNotifications, setNotificationAsRead } from '../firebase/firestore';
 import { auth } from '../firebase/config.js';
 import {format} from 'date-fns';
 
@@ -66,21 +66,31 @@ export default function Notifications() {
     if (!user?.uid) return;
 
     return getUserNotifications(user.uid, (notifications) => {
-      const previousIds = new Set(seenIdsRef.current);
-
-      const newItems = notifications.filter(n => !previousIds.has(n.id));
+      // filtro le notifiche che non sono lette
+      const newItems = notifications.filter(n => n.read === false);
 
       // aggiorno subito il set con tutti i doc correnti
       seenIdsRef.current = new Set(notifications.map(n => n.id));
 
-      // toast solo per le nuove
+      // mostro notifiche solo per le nuove notifiche che non erano già state viste
       newItems.forEach((n) => {
         toast(notificationBodyConstructor(n.title || 'Nuova notifica', n.body));
       });
 
+      setNewNotifications(newItems.length > 0);
       setNotifications(notifications);
-    });
+    }, false);
+
   }, [user?.uid]);
+
+  useEffect(() => {
+    // toast per la nuova notifica
+    const unreadNotifications = notifications.filter(n => !seenIdsRef.current.has(n.id));
+
+    unreadNotifications.forEach((n) => {
+      toast(notificationBodyConstructor(n.title || 'Nuova notifica', n.body));
+    });
+  }, [newNotifications]);
 
   const handleNotificationBtnClick = () => {
     setNewNotifications(false);
@@ -92,6 +102,9 @@ export default function Notifications() {
         setNotificationPermission(permission != 'granted' ? 'denied' : 'granted');
       });
     }
+
+    // TODO imposta le notifiche mostrate come lette su firestore
+    setNotificationAsRead(user.uid, notifications.map(n => n.id));
   }
 
   const handleNotificationCloseBtnClick = () => {

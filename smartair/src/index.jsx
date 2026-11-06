@@ -2,7 +2,7 @@ import {StrictMode} from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './pages/App';
-import { ToastContainer, toast } from 'react-toastify'; 
+import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -30,22 +30,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ATTIVAZIONE DELLE NOTIFICHE
-
 if (!'Notification' in window){
   alert("Questo browser non supporta le notifiche. Alcune funzionalità potrebbero non funzionare correttamente.");
-}
-else if (Notification.permission !== 'granted') { 
-  // se non è ancora stato dato il permesso per le notifiche lo chiede
-  Notification.requestPermission().then((permission) => {
-    if (permission !== 'granted') { // permesso negato
-      alert("Le notifiche sono state disabilitate. Alcune funzionalità potrebbero non funzionare correttamente.");
-    }
-    toast("SmartAir", {
-      lang: "it",
-      body: "Notifiche abilitate",
-      icon: "/logo.png",
-      vibrate: [200, 100, 200]
-    });
-  });
 }

@@ -253,15 +253,22 @@ export async function addNotificationToUser(uId, notification){
   return newDoc;
 }
 
-// Passa alla callback l'array di notifiche non lette dall'utente definito da uid
-export function getUserNotifications(uid, callback){
+// Passa alla callback l'array di notifiche dell'utente definito da uid
+export function getUserNotifications(uid, callback, onlyUnread = false) {
   const q = query(
     collection(db, "users", uid, "notifications"),
-    where("read", "==", false),
+    ...(onlyUnread ? [where("read", "==", false)] : []),
     orderBy("time", "desc")
   );
 
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   });
+}
+
+export function setNotificationAsRead(uid, notificationIdList){
+  for (const notificationId of notificationIdList){
+    const notificationRef = doc(db, "users", uid, "notifications", notificationId);
+    setDoc(notificationRef, { read: true }, { merge: true })
+  }
 }

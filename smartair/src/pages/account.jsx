@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { auth } from '../firebase/config';
 import { updatePassword } from 'firebase/auth';
-import { LuBellRing, LuBellOff } from 'react-icons/lu'
+import { LuBellRing, LuBellOff } from 'react-icons/lu';
+import { attivaPush } from '../push';
 
 import '../styles/account.css'
 
@@ -41,14 +42,7 @@ export default function Account() {
   };
 
   const handleNotificationClick = () => {
-    Notification.requestPermission().then((permission) => {
-      if(permission !== 'granted'){
-        alert("Le notifiche sono state disabilitate. Alcune funzionalità potrebbero non funzionare correttamente.");
-      }
-      else{
-        toast("Notifiche abilitate.");
-      }
-    });
+    attivaPush();
   };
 
   return (
@@ -110,7 +104,7 @@ export default function Account() {
       </div>
 
       <div className='account_section'>
-        <h3>Notifiche</h3>
+        <h3>Notifiche push</h3>
         <button 
         className=''
         onClick={handleNotificationClick}>
