@@ -11,6 +11,7 @@ import '../styles/Notifications.css';
 // Non si possono usre gli state fuori dai blocchi quindi devo fare a questa maniera
 var newNotifications = false;
 const listeners = new Set();
+const toastedNotificationIds = new Set();
 
 function setNewNotifications(value) {
   newNotifications = value;
@@ -42,9 +43,7 @@ export function sendNotification(data) {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
 
-  setNewNotifications(true);
   addNotificationToUser(uid, data);
-  toast(notificationBodyConstructor(data.title, data.body));
 }
 
 export default function Notifications() {
@@ -55,6 +54,7 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState(null);
   const seenIdsRef = useRef(new Set());
+  const hasInitialSnapshotRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => {
@@ -67,32 +67,37 @@ export default function Notifications() {
   useEffect(() => {
     if (!user?.uid) return;
 
+    seenIdsRef.current = new Set();
+    hasInitialSnapshotRef.current = false;
+
     return getUserNotifications(user.uid, (notifications) => {
-      // filtro le notifiche che non sono lette
-      const newItems = notifications.filter(n => n.read === false);
+      const currentIds = new Set(notifications.map((n) => n.id));
 
-      // aggiorno subito il set con tutti i doc correnti
-      seenIdsRef.current = new Set(notifications.map(n => n.id));
+      if (hasInitialSnapshotRef.current) {
+        notifications.forEach((notification) => {
+          const toastId = `${user.uid}:${notification.id}`;
+          if (
+            !seenIdsRef.current.has(notification.id) &&
+            notification.read === false &&
+            !toastedNotificationIds.has(toastId)
+          ) {
+            toastedNotificationIds.add(toastId);
+            toast(notificationBodyConstructor(
+              notification.title || 'Nuova notifica',
+              notification.body
+            ));
+          }
+        });
+      } else {
+        hasInitialSnapshotRef.current = true;
+      }
 
-      // mostro notifiche solo per le nuove notifiche che non erano già state viste
-      newItems.forEach((n) => {
-        toast(notificationBodyConstructor(n.title || 'Nuova notifica', n.body));
-      });
-
-      setNewNotifications(newItems.length > 0);
+      seenIdsRef.current = currentIds;
+      setNewNotifications(notifications.some((n) => n.read === false));
       setNotifications(notifications);
     }, false);
 
   }, [user?.uid]);
-
-  useEffect(() => {
-    // toast per la nuova notifica
-    const unreadNotifications = notifications.filter(n => !seenIdsRef.current.has(n.id));
-
-    unreadNotifications.forEach((n) => {
-      toast(notificationBodyConstructor(n.title || 'Nuova notifica', n.body));
-    });
-  }, [newNotifications]);
 
   const handleNotificationBtnClick = () => {
     setNewNotifications(false);

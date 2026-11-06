@@ -1,13 +1,42 @@
-.account_header {
-    padding: 32px;
-    max-width: 500px;
+.account_page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  padding: 34px;
+  background: #f3f7fc;
 }
 
 .account_section {
-    margin-bottom: 24px;
-    padding: 16px;
-    background: white;
-    border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 760px);
+  min-width: 250px;
+  height: auto;
+  margin: 12px auto;
+  padding: 26px;
+  background: #fff;
+  border: 1px solid #dfe8f2;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(31,59,91,.07);
+}
+
+.account_section_inline {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+    width: min(100%, 760px);
+    min-width: 250px;
+    height: auto;
+    margin: 12px auto;
+    padding: 26px;
+    background: #fff;
+    border: 1px solid #dfe8f2;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(31,59,91,.07);
 }
 
 .section_title {
