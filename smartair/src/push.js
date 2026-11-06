@@ -16,18 +16,26 @@ export async function attivaPush() {
     throw new Error('Questo browser non supporta le notifiche push.');
   }
 
+  const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  if (!vapidPublicKey) {
+    throw new Error('La chiave pubblica VAPID non è configurata.');
+  }
+
+  if (typeof Notification === 'undefined') {
+    throw new Error('Questo browser non supporta le notifiche.');
+  }
+
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
     throw new Error('Permesso notifiche non concesso.');
   }
 
   const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(
-      import.meta.env.VITE_VAPID_PUBLIC_KEY
-    ),
-  });
+  const subscription = await registration.pushManager.getSubscription()
+    ?? await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
 
   const salvaSubscription = httpsCallable(functions, 'savePushSubscription');
   await salvaSubscription({ subscription: subscription.toJSON() });

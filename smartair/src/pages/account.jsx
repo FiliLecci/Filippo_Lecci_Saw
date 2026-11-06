@@ -11,9 +11,14 @@ export default function Account() {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [pushError, setPushError] = useState('');
+  const [pushSuccess, setPushSuccess] = useState('');
+  const [pushLoading, setPushLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const user = auth.currentUser;
+  const notificationsSupported = typeof Notification !== 'undefined';
+  const pushPermission = notificationsSupported ? Notification.permission : 'unsupported';
 
   const handleChangePassword = async () => {
     if (password.length < 6) {
@@ -41,8 +46,19 @@ export default function Account() {
     }
   };
 
-  const handleNotificationClick = () => {
-    attivaPush();
+  const handleNotificationClick = async () => {
+    setPushLoading(true);
+    setPushError('');
+    setPushSuccess('');
+
+    try {
+      await attivaPush();
+      setPushSuccess('Notifiche push attivate su questo dispositivo.');
+    } catch (e) {
+      setPushError(e.message);
+    } finally {
+      setPushLoading(false);
+    }
   };
 
   return (
@@ -105,11 +121,18 @@ export default function Account() {
 
       <div className='account_section'>
         <h3>Notifiche push</h3>
-        <button 
-        className=''
-        onClick={handleNotificationClick}>
-          {Notification.permission === 'granted' ? <LuBellRing /> : <LuBellOff />}
+        <button
+          onClick={handleNotificationClick}
+          disabled={pushLoading || !notificationsSupported}
+          aria-label="Attiva notifiche push"
+        >
+          {pushPermission === 'granted' ? <LuBellRing /> : <LuBellOff />}
+          {pushLoading ? 'Attivazione...' : 'Attiva notifiche'}
         </button>
+        {!notificationsSupported && <p>Questo browser non supporta le notifiche push.</p>}
+        {pushPermission === 'denied' && <p>Il permesso è stato negato. Modificalo nelle impostazioni del browser.</p>}
+        {pushError && <p role="alert" style={{ color: '#f44336', fontSize: 13, margin: '8px 0' }}>{pushError}</p>}
+        {pushSuccess && <p role="status" style={{ color: '#4caf50', fontSize: 13, margin: '8px 0' }}>{pushSuccess}</p>}
       </div>
     </div>
   );

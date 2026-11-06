@@ -5,8 +5,7 @@
   },
   "functions": {
     "codebase": "default",
-    "source": "functions",
-    "regions": ["us-central1"]
+    "source": "functions"
   },
   "hosting": {
     "public": "dist",

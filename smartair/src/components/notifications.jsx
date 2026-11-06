@@ -48,7 +48,9 @@ export function sendNotification(data) {
 }
 
 export default function Notifications() {
-  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+  const [notificationPermission, setNotificationPermission] = useState(
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+  );
   const [notificationWindowViewed, setNotificationWindowViewed] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState(null);
@@ -97,7 +99,11 @@ export default function Notifications() {
     setNotificationWindowViewed(true);
 
     // mostra la richiesta solo se il permesso è default (non ancora concesso o negato)
-    if ((notificationPermission === 'default' || Notification.permission === 'default') && notificationWindowViewed === false) {
+    if (
+      typeof Notification !== 'undefined' &&
+      (notificationPermission === 'default' || Notification.permission === 'default') &&
+      notificationWindowViewed === false
+    ) {
       Notification.requestPermission().then((permission) => {
         setNotificationPermission(permission != 'granted' ? 'denied' : 'granted');
       });

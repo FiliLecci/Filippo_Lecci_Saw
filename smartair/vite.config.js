@@ -11,7 +11,8 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      devOptions: { enabled: true, type: 'module' },
+      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png', 'offline.html'],
       manifest: {
         name: 'Smartair',
         short_name: 'Smartair',

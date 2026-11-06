@@ -14,22 +14,6 @@ root.render(
   </StrictMode>
 );
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      await navigator.serviceWorker.register('/sw.js').then(
-        () => console.log('Service Worker registrato')
-      );
-
-      // Aspetta che il SW sia attivo
-      await navigator.serviceWorker.ready;
-
-    } catch (error) {
-      console.error('Registrazione fallita:', error.name, error.message);
-    }
-  });
-}
-
-if (!'Notification' in window){
+if (!('Notification' in window)) {
   alert("Questo browser non supporta le notifiche. Alcune funzionalità potrebbero non funzionare correttamente.");
 }

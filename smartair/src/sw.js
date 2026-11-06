@@ -1,15 +1,30 @@
-import { precacheAndRoute } from 'workbox-precaching';
-
-self.addEventListener('install', () => {
-  console.log('Service Worker installato');
-});
-
-self.addEventListener('activate', () => {
-  console.log('Service Worker attivato');
-});
-
+import { matchPrecache, precacheAndRoute } from 'workbox-precaching';
+import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
+import { NetworkFirst } from 'workbox-strategies';
 
 precacheAndRoute(self.__WB_MANIFEST);
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+registerRoute(
+  new NavigationRoute(
+    new NetworkFirst({ cacheName: 'smartair-pages' })
+  )
+);
+
+setCatchHandler(async ({ request }) => {
+  if (request.mode === 'navigate') {
+    return (await matchPrecache('/offline.html')) ?? Response.error();
+  }
+
+  return Response.error();
+});
 
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};

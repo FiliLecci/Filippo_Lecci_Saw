@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#060020" />
+    <title>Offline - SmartAir</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        padding: 24px;
+        place-items: center;
+        background: #f5f7fb;
+        color: #1f3b5b;
+        font-family: Verdana, sans-serif;
+        text-align: center;
+      }
+      main {
+        width: min(100%, 440px);
+        padding: 36px 28px;
+        border: 1px solid #dfe8f2;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(31, 59, 91, .08);
+      }
+      img { width: 76px; height: 76px; object-fit: contain; }
+      h1 { margin: 20px 0 12px; font-size: 1.5rem; }
+      p { margin: 0 0 24px; color: #52657c; line-height: 1.6; }
+      button {
+        padding: 12px 20px;
+        border: 0;
+        border-radius: 8px;
+        background: #176bd0;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+      }
+      button:hover { background: #125bb4; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/smartair_logo_completo.png" alt="SmartAir" />
+      <h1>Sei offline</h1>
+      <p>Non è possibile raggiungere SmartAir in questo momento. Controlla la connessione e riprova.</p>
+      <button type="button" onclick="window.location.reload()">Riprova</button>
+    </main>
+  </body>
+</html>

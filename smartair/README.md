@@ -29,6 +29,18 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
+## Notifiche push e modalità offline
+
+Per abilitare le notifiche push, configura la stessa coppia di chiavi VAPID sia nel frontend sia nelle Cloud Functions:
+
+- imposta `VITE_VAPID_PUBLIC_KEY` nell'ambiente usato per compilare il frontend;
+- per l'emulatore, copia la chiave pubblica in `functions/.env` come `VAPID_PUBLIC_KEY` (il `.env` nella radice contiene variabili Vite e non configura automaticamente le Functions);
+- in produzione, configura il parametro `VAPID_PUBLIC_KEY` per le Cloud Functions e salva la chiave privata con `firebase functions:secrets:set VAPID_PRIVATE_KEY`.
+
+Per provare l'invio push con l'emulatore, aggiungi anche `VAPID_PRIVATE_KEY` a `functions/.secret.local`. Questi file locali non vanno committati. Riavvia `npm run emulators` dopo averli creati. La chiave pubblica deve corrispondere alla privata. Dopo aver configurato le chiavi e distribuito frontend e funzioni, l'utente può attivare le notifiche dalla pagina Account. Le push richiedono HTTPS (localhost è supportato per lo sviluppo).
+
+La pagina `public/offline.html` viene precache-ata dal service worker e mostrata quando una navigazione non può essere completata offline.
+
 ### `npm run eject`
 
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**

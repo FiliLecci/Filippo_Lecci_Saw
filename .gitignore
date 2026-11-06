@@ -18,6 +18,7 @@ smartair/.firebase/
 .env.development.local
 .env.test.local
 .env.production.local
+.secret.local
 *.pem
 
 # File di Log ed Errori
